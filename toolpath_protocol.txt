@@ -1,0 +1,14 @@
+moveL (multiple timesteps and blocking)
+	move linearly in cartesian space to a desired point
+
+load (multiple timesteps and blocking)
+	move robot until desired force reached
+
+forceCtrl (single timestep)
+	5-d robot position and 1-d desired force for one point in time
+
+posCtrl (single timestep)
+	6-d position for one point in time
+
+unload (multiple timesteps and blocking)
+	move robot until force is reduced
