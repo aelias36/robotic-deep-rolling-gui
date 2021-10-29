@@ -1,7 +1,7 @@
 # Robotic Deep Rolling GUI
 
 ## Python packages
-`pip install pyqt5 pyqt5-tools`
+`pip install pyqt5 pyqt5-tools protobuf beautifulsoup4 ws4py`
 
 ## Sources
 

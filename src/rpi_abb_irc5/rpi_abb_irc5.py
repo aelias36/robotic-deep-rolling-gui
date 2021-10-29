@@ -30,9 +30,11 @@ from __future__ import absolute_import
 
 import socket
 import select
-from . import egm_pb2
+#from . import egm_pb2
+import egm_pb2
 import requests
-from BeautifulSoup import BeautifulSoup
+#from BeautifulSoup import BeautifulSoup
+from bs4 import BeautifulSoup
 import traceback
 from collections import namedtuple
 import numpy as np
@@ -122,7 +124,7 @@ class EGM(object):
 
         return True
 
-EGMRobotState=namedtuple('EGMRobotState', ['joint_angles', 'rapid_running', 'motors_on', 'robot_message'], verbose=False)
+EGMRobotState=namedtuple('EGMRobotState', ['joint_angles', 'rapid_running', 'motors_on', 'robot_message'])
 JointTarget=namedtuple('JointTarget', ['robax', 'extax'])
 RobTarget=namedtuple('RobTarget', ['trans','rot','robconf','extax'])
 
@@ -503,7 +505,7 @@ class RAPID(object):
         ws.connect()        
         return ws
 
-RAPIDExecutionState=namedtuple('RAPIDExecutionState', ['ctrlexecstate', 'cycle'], verbose=False)
+RAPIDExecutionState=namedtuple('RAPIDExecutionState', ['ctrlexecstate', 'cycle'])
 RAPIDEventLogEntry=namedtuple('RAPIDEventLogEntry', ['msgtype', 'code', 'tstamp', 'args', 'title', 'desc', 'conseqs', 'causes', 'actions'])
 RAPIDIpcMessage=namedtuple('RAPIDIpcMessage',['data','userdef','msgtype','cmd'])
 RAPIDSignal=namedtuple('RAPIDSignal',['name','lvalue'])
@@ -535,7 +537,7 @@ class RAPIDSubscriptionClient(WebSocketClient):
             data=self.extract_data(soup)
             self._callback(data)
         else:
-            print "Received Illegal Event " + str(event_xml)
+            print("Received Illegal Event " + str(event_xml))
             
     def extract_data(self, soup):
         return None
