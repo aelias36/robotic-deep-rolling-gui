@@ -26,7 +26,7 @@ That code is based on this python2 code https://github.com/rpiRobotics/rpi_ati_n
 Robot deflection simulation for simulating force/torque sensor readings when using RobotStudio
 
 ### `src > general_robotics_toolbox`
-Taken from https://github.com/rpiRobotics/general-robotics-toolbox
+Taken from https://github.com/rpiRobotics/rpi_general_robotics_toolbox_py
 
 ### `src > gui`
 Qt GUI made in Qt Designer
