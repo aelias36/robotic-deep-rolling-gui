@@ -1,7 +1,7 @@
 # Robotic Deep Rolling GUI
 
 ## Python packages
-`pip install pyqt5 pyqt5-tools protobuf beautifulsoup4 ws4py`
+`python3 -m pip install numpy pyqt5 pyqt5-tools protobuf beautifulsoup4 ws4py pyyaml`
 
 ## Sources
 
@@ -27,6 +27,7 @@ Qt GUI made in Qt Designer
 Forward and inverse kinematics for ABB IRB-6640
 ### `rpi_abb_irc5`
 Interface to ABB's EGM
-Taken from https://github.com/rpiRobotics/rpi_abb_irc5
+Based on https://github.com/rpiRobotics/rpi_abb_irc5
+And ported to python3
 ### `toolpath_gen`
 Generate toolpath files for the controller to execute
