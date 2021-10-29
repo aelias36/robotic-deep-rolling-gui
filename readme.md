@@ -1,11 +1,13 @@
 # Robotic Deep Rolling GUI
 
 ## Python packages
-`python3 -m pip install numpy pyqt5 pyqt5-tools protobuf beautifulsoup4 ws4py pyyaml`
+`python3 -m pip install general-robotics-toolbox numpy pyqt5 pyqt5-tools protobuf beautifulsoup4 ws4py pyyaml`
 
 ## Sources
 
 Older deep rolling code https://github.com/ShuyoungChen/force_motion_control_physical
+
+Reference for general robotics toolbox https://github.com/rpiRobotics/rpi_general_robotics_toolbox_py
 
 ## Folder breakdown
 
@@ -24,9 +26,6 @@ That code is based on this python2 code https://github.com/rpiRobotics/rpi_ati_n
 
 ### `src > ft_simulation`
 Robot deflection simulation for simulating force/torque sensor readings when using RobotStudio
-
-### `src > general_robotics_toolbox`
-Taken from https://github.com/rpiRobotics/rpi_general_robotics_toolbox_py
 
 ### `src > gui`
 Qt GUI made in Qt Designer
