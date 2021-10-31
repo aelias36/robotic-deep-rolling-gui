@@ -283,7 +283,7 @@
       <double>1.000000000000000</double>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_2">
+    <widget class="QLCDNumber" name="world_y">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -299,7 +299,7 @@
       <enum>QLCDNumber::Dec</enum>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_3">
+    <widget class="QLCDNumber" name="world_z">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -1878,7 +1878,7 @@
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_2">
+    <widget class="QLineEdit" name="mode_disp">
      <property name="enabled">
       <bool>true</bool>
      </property>
@@ -2042,7 +2042,7 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLineEdit" name="lineEdit_5">
+    <widget class="QLineEdit" name="status_disp">
      <property name="enabled">
       <bool>true</bool>
      </property>
