@@ -30,8 +30,8 @@ from __future__ import absolute_import
 
 import socket
 import select
-#from . import egm_pb2
-import egm_pb2
+from . import egm_pb2
+#import egm_pb2
 import requests
 #from BeautifulSoup import BeautifulSoup
 from bs4 import BeautifulSoup

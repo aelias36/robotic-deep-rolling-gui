@@ -92,12 +92,14 @@ def invkin(R, p, last_joints=None):
 
 def test_func():
     
-    q1 = np.deg2rad(rand()*340-170)
-    q2 = np.deg2rad(rand()*150-65)
-    q3 = np.deg2rad(rand()*250-180)
-    q4 = np.deg2rad(rand()*600-300)
-    q5 = np.deg2rad(rand()*240-120)
-    q6 = np.deg2rad(rand()*720-360)
+    # q1 = np.deg2rad(rand()*340-170)
+    # q2 = np.deg2rad(rand()*150-65)
+    # q3 = np.deg2rad(rand()*250-180)
+    # q4 = np.deg2rad(rand()*600-300)
+    # q5 = np.deg2rad(rand()*240-120)
+    # q6 = np.deg2rad(rand()*720-360)
+
+    q1,q2,q3,q4,q5,q6 = 0.,0.,0.,0.,0.,0.
 
     print("Initial q")
     print(np.array([q1, q2, q3, q4, q5, q6]))

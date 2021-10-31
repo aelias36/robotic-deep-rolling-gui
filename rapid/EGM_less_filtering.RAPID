@@ -5,7 +5,7 @@ MODULE EGM_test_UDP
     
     CONST egm_minmax egm_minmax_joint1:=[-0.01,0.01];
     
-    CONST jointtarget p20:=[[0, 0, -178, 0, 90, 0],[9E9,9E9,9E9,9E9,9E9,9E9]];
+    CONST jointtarget p20:=[[0, 0, 0, 0, 90, 0],[9E9,9E9,9E9,9E9,9E9,9E9]];
     
     PERS Bool loggerEnabled:=TRUE;
     
@@ -13,7 +13,7 @@ MODULE EGM_test_UDP
         EGMReset egmID1;
         EGMGetId egmID1;     
         EGMStop egmID1, EGM_STOP_HOLD, \RampOutTime := 100;
-        MoveAbsJ p20,vmax,fine,\Inpos:=inpos100,tool0;
+        MoveAbsJ p20,v200,fine,\Inpos:=inpos100,tool0;
         WaitTime 1;
         testuc_UDP; 
     ENDPROC
@@ -53,5 +53,5 @@ MODULE EGM_test_UDP
             ExitCycle;
         ENDIF
     ENDPROC
-	
+    
 ENDMODULE
