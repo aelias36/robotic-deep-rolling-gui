@@ -108,7 +108,7 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_4">
+    <widget class="QLCDNumber" name="world_r">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -117,8 +117,11 @@
        <height>51</height>
       </rect>
      </property>
+     <property name="segmentStyle">
+      <enum>QLCDNumber::Flat</enum>
+     </property>
      <property name="value" stdset="0">
-      <double>90.000000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_9">
@@ -145,6 +148,9 @@
      </property>
     </widget>
     <widget class="QLCDNumber" name="world_x">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -172,10 +178,10 @@
       <enum>QLCDNumber::Dec</enum>
      </property>
      <property name="segmentStyle">
-      <enum>QLCDNumber::Filled</enum>
+      <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
-      <double>1.234000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_4">
@@ -270,7 +276,7 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_5">
+    <widget class="QLCDNumber" name="world_rx">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -279,8 +285,11 @@
        <height>51</height>
       </rect>
      </property>
+     <property name="segmentStyle">
+      <enum>QLCDNumber::Flat</enum>
+     </property>
      <property name="value" stdset="0">
-      <double>1.000000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLCDNumber" name="world_y">
@@ -298,6 +307,9 @@
      <property name="mode">
       <enum>QLCDNumber::Dec</enum>
      </property>
+     <property name="segmentStyle">
+      <enum>QLCDNumber::Flat</enum>
+     </property>
     </widget>
     <widget class="QLCDNumber" name="world_z">
      <property name="geometry">
@@ -307,6 +319,9 @@
        <width>131</width>
        <height>51</height>
       </rect>
+     </property>
+     <property name="segmentStyle">
+      <enum>QLCDNumber::Flat</enum>
      </property>
     </widget>
     <widget class="QLabel" name="label_6">
@@ -424,7 +439,7 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_6">
+    <widget class="QLCDNumber" name="world_ry">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -433,11 +448,14 @@
        <height>51</height>
       </rect>
      </property>
+     <property name="segmentStyle">
+      <enum>QLCDNumber::Flat</enum>
+     </property>
      <property name="value" stdset="0">
       <double>0.000000000000000</double>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_7">
+    <widget class="QLCDNumber" name="world_rz">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -446,11 +464,14 @@
        <height>51</height>
       </rect>
      </property>
+     <property name="segmentStyle">
+      <enum>QLCDNumber::Flat</enum>
+     </property>
      <property name="value" stdset="0">
       <double>0.000000000000000</double>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_8">
+    <widget class="QLCDNumber" name="world_fx">
      <property name="geometry">
       <rect>
        <x>330</x>
@@ -478,7 +499,7 @@
       <enum>QLCDNumber::Dec</enum>
      </property>
      <property name="segmentStyle">
-      <enum>QLCDNumber::Filled</enum>
+      <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
       <double>1.234000000000000</double>
@@ -553,7 +574,7 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_9">
+    <widget class="QLCDNumber" name="world_fy">
      <property name="geometry">
       <rect>
        <x>330</x>
@@ -581,7 +602,7 @@
       <enum>QLCDNumber::Dec</enum>
      </property>
      <property name="segmentStyle">
-      <enum>QLCDNumber::Filled</enum>
+      <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
       <double>1.234000000000000</double>
@@ -633,7 +654,7 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_10">
+    <widget class="QLCDNumber" name="world_fz">
      <property name="geometry">
       <rect>
        <x>330</x>
@@ -661,7 +682,7 @@
       <enum>QLCDNumber::Dec</enum>
      </property>
      <property name="segmentStyle">
-      <enum>QLCDNumber::Filled</enum>
+      <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
       <double>1.234000000000000</double>
@@ -713,7 +734,7 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_11">
+    <widget class="QLCDNumber" name="world_tx">
      <property name="geometry">
       <rect>
        <x>330</x>
@@ -741,7 +762,7 @@
       <enum>QLCDNumber::Dec</enum>
      </property>
      <property name="segmentStyle">
-      <enum>QLCDNumber::Filled</enum>
+      <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
       <double>1.234000000000000</double>
@@ -793,7 +814,7 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_12">
+    <widget class="QLCDNumber" name="world_ty">
      <property name="geometry">
       <rect>
        <x>330</x>
@@ -821,7 +842,7 @@
       <enum>QLCDNumber::Dec</enum>
      </property>
      <property name="segmentStyle">
-      <enum>QLCDNumber::Filled</enum>
+      <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
       <double>1.234000000000000</double>
@@ -873,7 +894,7 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_13">
+    <widget class="QLCDNumber" name="world_tz">
      <property name="geometry">
       <rect>
        <x>330</x>
@@ -901,7 +922,7 @@
       <enum>QLCDNumber::Dec</enum>
      </property>
      <property name="segmentStyle">
-      <enum>QLCDNumber::Filled</enum>
+      <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
       <double>1.234000000000000</double>
@@ -1014,6 +1035,9 @@
        <height>51</height>
       </rect>
      </property>
+     <property name="segmentStyle">
+      <enum>QLCDNumber::Flat</enum>
+     </property>
      <property name="value" stdset="0">
       <double>90.000000000000000</double>
      </property>
@@ -1069,7 +1093,7 @@
       <enum>QLCDNumber::Dec</enum>
      </property>
      <property name="segmentStyle">
-      <enum>QLCDNumber::Filled</enum>
+      <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
       <double>1.234000000000000</double>
@@ -1176,6 +1200,9 @@
        <height>51</height>
       </rect>
      </property>
+     <property name="segmentStyle">
+      <enum>QLCDNumber::Flat</enum>
+     </property>
      <property name="value" stdset="0">
       <double>1.000000000000000</double>
      </property>
@@ -1195,6 +1222,9 @@
      <property name="mode">
       <enum>QLCDNumber::Dec</enum>
      </property>
+     <property name="segmentStyle">
+      <enum>QLCDNumber::Flat</enum>
+     </property>
     </widget>
     <widget class="QLCDNumber" name="lcdNumber_18">
      <property name="geometry">
@@ -1204,6 +1234,9 @@
        <width>131</width>
        <height>51</height>
       </rect>
+     </property>
+     <property name="segmentStyle">
+      <enum>QLCDNumber::Flat</enum>
      </property>
     </widget>
     <widget class="QLabel" name="label_32">
@@ -1330,6 +1363,9 @@
        <height>51</height>
       </rect>
      </property>
+     <property name="segmentStyle">
+      <enum>QLCDNumber::Flat</enum>
+     </property>
      <property name="value" stdset="0">
       <double>0.000000000000000</double>
      </property>
@@ -1342,6 +1378,9 @@
        <width>131</width>
        <height>51</height>
       </rect>
+     </property>
+     <property name="segmentStyle">
+      <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
       <double>0.000000000000000</double>
@@ -1375,7 +1414,7 @@
       <enum>QLCDNumber::Dec</enum>
      </property>
      <property name="segmentStyle">
-      <enum>QLCDNumber::Filled</enum>
+      <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
       <double>1.234000000000000</double>
@@ -1478,7 +1517,7 @@
       <enum>QLCDNumber::Dec</enum>
      </property>
      <property name="segmentStyle">
-      <enum>QLCDNumber::Filled</enum>
+      <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
       <double>1.234000000000000</double>
@@ -1558,7 +1597,7 @@
       <enum>QLCDNumber::Dec</enum>
      </property>
      <property name="segmentStyle">
-      <enum>QLCDNumber::Filled</enum>
+      <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
       <double>1.234000000000000</double>
@@ -1638,7 +1677,7 @@
       <enum>QLCDNumber::Dec</enum>
      </property>
      <property name="segmentStyle">
-      <enum>QLCDNumber::Filled</enum>
+      <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
       <double>1.234000000000000</double>
@@ -1718,7 +1757,7 @@
       <enum>QLCDNumber::Dec</enum>
      </property>
      <property name="segmentStyle">
-      <enum>QLCDNumber::Filled</enum>
+      <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
       <double>1.234000000000000</double>
@@ -1798,7 +1837,7 @@
       <enum>QLCDNumber::Dec</enum>
      </property>
      <property name="segmentStyle">
-      <enum>QLCDNumber::Filled</enum>
+      <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
       <double>1.234000000000000</double>
@@ -1869,7 +1908,7 @@
       </rect>
      </property>
      <property name="value">
-      <number>28</number>
+      <number>0</number>
      </property>
      <property name="textVisible">
       <bool>true</bool>
@@ -1896,7 +1935,7 @@
       </font>
      </property>
      <property name="text">
-      <string>FORCE CONTROL</string>
+      <string/>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -1966,7 +2005,7 @@
       </font>
      </property>
      <property name="text">
-      <string>36</string>
+      <string/>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -2013,7 +2052,7 @@
       </font>
      </property>
      <property name="text">
-      <string>128</string>
+      <string/>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -2060,7 +2099,7 @@
       </font>
      </property>
      <property name="text">
-      <string>RUNNING</string>
+      <string/>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -2116,7 +2155,7 @@
       </font>
      </property>
      <property name="text">
-      <string>sample_3_toolpath.csv</string>
+      <string/>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -2204,7 +2243,7 @@
       </font>
      </property>
      <property name="text">
-      <string>sample_3_wp_calibration.csv</string>
+      <string/>
      </property>
      <property name="readOnly">
       <bool>true</bool>
@@ -2258,7 +2297,7 @@
     </widget>
     <widget class="QDial" name="dial">
      <property name="enabled">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="geometry">
       <rect>
@@ -2273,6 +2312,9 @@
      </property>
      <property name="pageStep">
       <number>1</number>
+     </property>
+     <property name="value">
+      <number>3</number>
      </property>
      <property name="wrapping">
       <bool>false</bool>
@@ -2392,7 +2434,7 @@
     <property name="frameShadow">
      <enum>QFrame::Sunken</enum>
     </property>
-    <widget class="QPushButton" name="pushButton_5">
+    <widget class="QPushButton" name="plus_x">
      <property name="geometry">
       <rect>
        <x>150</x>
@@ -2410,7 +2452,7 @@
       <string>+X</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_6">
+    <widget class="QPushButton" name="minus_x">
      <property name="geometry">
       <rect>
        <x>50</x>
@@ -2428,7 +2470,7 @@
       <string>-X</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_7">
+    <widget class="QPushButton" name="minus_y">
      <property name="geometry">
       <rect>
        <x>100</x>
@@ -2446,7 +2488,7 @@
       <string>-Y</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_8">
+    <widget class="QPushButton" name="plus_y">
      <property name="geometry">
       <rect>
        <x>100</x>
@@ -2464,7 +2506,7 @@
       <string>+Y</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_9">
+    <widget class="QPushButton" name="plus_z">
      <property name="geometry">
       <rect>
        <x>270</x>
@@ -2482,7 +2524,7 @@
       <string>+Z</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_10">
+    <widget class="QPushButton" name="minus_z">
      <property name="geometry">
       <rect>
        <x>270</x>
@@ -2502,7 +2544,7 @@
     </widget>
     <widget class="QDial" name="dial_2">
      <property name="enabled">
-      <bool>true</bool>
+      <bool>false</bool>
      </property>
      <property name="geometry">
       <rect>
@@ -2516,6 +2558,9 @@
       <number>2</number>
      </property>
      <property name="pageStep">
+      <number>1</number>
+     </property>
+     <property name="value">
       <number>1</number>
      </property>
      <property name="wrapping">
@@ -2597,7 +2642,7 @@
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_11">
+    <widget class="QPushButton" name="plus_rx">
      <property name="geometry">
       <rect>
        <x>50</x>
@@ -2615,7 +2660,7 @@
       <string>+RX</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_12">
+    <widget class="QPushButton" name="plus_ry">
      <property name="geometry">
       <rect>
        <x>150</x>
@@ -2633,7 +2678,7 @@
       <string>+RY</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_13">
+    <widget class="QPushButton" name="plus_rz">
      <property name="geometry">
       <rect>
        <x>250</x>
@@ -2651,7 +2696,7 @@
       <string>+RZ</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_14">
+    <widget class="QPushButton" name="minus_rx">
      <property name="geometry">
       <rect>
        <x>50</x>
@@ -2669,7 +2714,7 @@
       <string>-RX</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_15">
+    <widget class="QPushButton" name="minus_rz">
      <property name="geometry">
       <rect>
        <x>250</x>
@@ -2687,7 +2732,7 @@
       <string>-RZ</string>
      </property>
     </widget>
-    <widget class="QPushButton" name="pushButton_16">
+    <widget class="QPushButton" name="minus_ry">
      <property name="geometry">
       <rect>
        <x>150</x>
