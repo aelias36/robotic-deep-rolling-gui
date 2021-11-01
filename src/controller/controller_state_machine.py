@@ -16,8 +16,6 @@ import numpy as np
 from robot_kin import abb_6640_kinematics as kin
 import general_robotics_toolbox as rox
 
-JOG_LINEAR_VEL = 0.1 # m/s
-JOG_ANGULAR_VEL = np.deg2rad(30) # rad/sec
 TIMESTEP = 0.004
 
 class ControllerStateMachine():
@@ -65,7 +63,7 @@ class ControllerStateMachine():
                     self.egm.receive_from_robot() # clear buffer
             self.state = "manual_jog"
             self.gui.status_disp.setText(self.state)
-            self.gui.status_disp.setStyleSheet("") # reset bg color
+            self.gui.status_disp.setStyleSheet("QLineEdit {}") # reset bg color
         else:
             pass
 
@@ -92,22 +90,25 @@ class ControllerStateMachine():
             self.gui.world_rz.display(k[2])
 
             # Calcualate desired velocity
+            jog_linear_rate = 1e-3 * self.gui.jog_linear_rate.value() # mm -> m
+            jog_angular_rate = np.deg2rad(self.gui.jog_angular_rate.value())
+
             v_des = None
             v_rot_des = None
 
             # Linear
             if self.gui.plus_x.isDown():
-                v_des = [JOG_LINEAR_VEL, 0.0, 0.0]
+                v_des = [1, 0.0, 0.0]
             elif self.gui.minus_x.isDown():
-                v_des = [-JOG_LINEAR_VEL, 0.0, 0.0]
+                v_des = [-1, 0.0, 0.0]
             elif self.gui.plus_y.isDown():
-                v_des = [0.0, JOG_LINEAR_VEL, 0.0]
+                v_des = [0.0, 1, 0.0]
             elif self.gui.minus_y.isDown():
-                v_des = [0.0, -JOG_LINEAR_VEL, 0.0]
+                v_des = [0.0, -1, 0.0]
             elif self.gui.plus_z.isDown():
-                v_des = [0.0, 0.0, JOG_LINEAR_VEL]
+                v_des = [0.0, 0.0, 1]
             elif self.gui.minus_z.isDown(): 
-                v_des = [0.0, 0.0, -JOG_LINEAR_VEL]
+                v_des = [0.0, 0.0, -1]
             # Angular
             elif self.gui.plus_rx.isDown():
                 v_rot_des = [1.0, 0.0, 0.0]
@@ -122,11 +123,31 @@ class ControllerStateMachine():
             elif self.gui.minus_rz.isDown(): 
                 v_rot_des = [0.0, 0.0, -1.0]
 
+            if v_des is not None:
+                v_des =  np.array(v_des)
+            if v_rot_des is not None:
+                v_rot_des = np.array(v_rot_des)
+
+            # Rotate velocity command based on reference frame
+            jog_ref_frame_num =  self.gui.jog_ref_frame_dial.value() 
+            if jog_ref_frame_num == 0: # workpiece
+                if v_des is not None or v_rot_des is not None:
+                    print("Warning: jogging in workpiece frame not implemented - jogging in world frame instead") # TODO
+            elif jog_ref_frame_num == 1: # world
+                pass # no need to adjust - already in world frame
+            elif jog_ref_frame_num == 2: # tool
+                if v_des is not None:
+                    v_des = self.local_robot_position.R.dot(v_des) 
+                if v_rot_des is not None:
+                    v_rot_des = self.local_robot_position.R.dot(v_rot_des)
+            else:
+                raise ValueError("Wrong value for jog reference frame dial: " + str(jog_ref_frame_num))
+
             # Apply velocity to local robot state
             if v_des is not None:
-                self.local_robot_position.p += np.array(v_des)*TIMESTEP
+                self.local_robot_position.p += v_des*jog_linear_rate*TIMESTEP
             if v_rot_des is not None:
-                self.local_robot_position.R = rox.rot(np.array(v_rot_des), JOG_ANGULAR_VEL * TIMESTEP).dot(self.local_robot_position.R)
+                self.local_robot_position.R = rox.rot(v_rot_des, jog_angular_rate * TIMESTEP).dot(self.local_robot_position.R)
 
             # Use local robot state to command real robot
             q_c = kin.invkin(self.local_robot_position.R,self.local_robot_position.p, last_joints = self.last_q)[0]
