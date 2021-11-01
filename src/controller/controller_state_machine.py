@@ -59,8 +59,6 @@ class ControllerStateMachine():
         res, state = self.egm.receive_from_robot(.1)
         if res:
             self.local_robot_position = None
-            for i in range(100):
-                    self.egm.receive_from_robot() # clear buffer
             self.state = "manual_jog"
             self.gui.status_disp.setText(self.state)
             self.gui.status_disp.setStyleSheet("QLineEdit {}") # reset bg color
@@ -70,6 +68,19 @@ class ControllerStateMachine():
     def state_manual_jog(self):
         res, state = self.egm.receive_from_robot(.1)
         if res:
+            # Clear queue
+            i = 0
+            while True:
+                res_i, state_i = self.egm.receive_from_robot()
+                if res_i: # there was another msg waiting
+                    state = state_i
+                    i += 1
+                else: # previous msg was end of queue
+                    break
+
+            if i > 0:
+                print("Warning: Number of extra msgs in queue: ", i)
+
             q_meas = np.deg2rad(state.joint_angles)
             
             # Calculate current position            
@@ -159,7 +170,6 @@ class ControllerStateMachine():
             self.state = "disconnected"
             self.gui.status_disp.setText(self.state)
             self.gui.status_disp.setStyleSheet("QLineEdit {background-color: red;}")
-
 
 
 def main():

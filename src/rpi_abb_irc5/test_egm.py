@@ -22,8 +22,6 @@ try:
 
 			q_c = np.deg2rad(state.joint_angles)
 			egm.send_to_robot(q_c)
-			#print(q_c)
-		#print(res, state)
 
 except KeyboardInterrupt:
 	raise
