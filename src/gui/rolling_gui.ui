@@ -117,6 +117,10 @@
        <height>51</height>
       </rect>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="segmentStyle">
       <enum>QLCDNumber::Flat</enum>
      </property>
@@ -165,8 +169,18 @@
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="autoFillBackground">
+      <bool>false</bool>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
      </property>
      <property name="smallDecimalPoint">
       <bool>false</bool>
@@ -285,6 +299,10 @@
        <height>51</height>
       </rect>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="segmentStyle">
       <enum>QLCDNumber::Flat</enum>
      </property>
@@ -304,6 +322,10 @@
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="mode">
       <enum>QLCDNumber::Dec</enum>
      </property>
@@ -319,6 +341,10 @@
        <width>131</width>
        <height>51</height>
       </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
      </property>
      <property name="segmentStyle">
       <enum>QLCDNumber::Flat</enum>
@@ -448,6 +474,10 @@
        <height>51</height>
       </rect>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="segmentStyle">
       <enum>QLCDNumber::Flat</enum>
      </property>
@@ -463,6 +493,10 @@
        <width>131</width>
        <height>51</height>
       </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
      </property>
      <property name="segmentStyle">
       <enum>QLCDNumber::Flat</enum>
@@ -486,6 +520,10 @@
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Box</enum>
      </property>
@@ -502,7 +540,7 @@
       <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
-      <double>1.234000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_13">
@@ -589,6 +627,10 @@
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Box</enum>
      </property>
@@ -605,7 +647,7 @@
       <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
-      <double>1.234000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_16">
@@ -669,6 +711,10 @@
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Box</enum>
      </property>
@@ -685,7 +731,7 @@
       <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
-      <double>1.234000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_18">
@@ -749,6 +795,10 @@
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Box</enum>
      </property>
@@ -765,7 +815,7 @@
       <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
-      <double>1.234000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_20">
@@ -829,6 +879,10 @@
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Box</enum>
      </property>
@@ -845,7 +899,7 @@
       <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
-      <double>1.234000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_22">
@@ -909,6 +963,10 @@
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Box</enum>
      </property>
@@ -925,7 +983,7 @@
       <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
-      <double>1.234000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_24">
@@ -1035,11 +1093,15 @@
        <height>51</height>
       </rect>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="segmentStyle">
       <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
-      <double>90.000000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_27">
@@ -1080,6 +1142,10 @@
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Box</enum>
      </property>
@@ -1096,7 +1162,7 @@
       <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
-      <double>1.234000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_28">
@@ -1200,11 +1266,15 @@
        <height>51</height>
       </rect>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="segmentStyle">
       <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
-      <double>1.000000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLCDNumber" name="lcdNumber_17">
@@ -1219,11 +1289,18 @@
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="mode">
       <enum>QLCDNumber::Dec</enum>
      </property>
      <property name="segmentStyle">
       <enum>QLCDNumber::Flat</enum>
+     </property>
+     <property name="value" stdset="0">
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLCDNumber" name="lcdNumber_18">
@@ -1235,8 +1312,15 @@
        <height>51</height>
       </rect>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="segmentStyle">
       <enum>QLCDNumber::Flat</enum>
+     </property>
+     <property name="value" stdset="0">
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_32">
@@ -1363,6 +1447,10 @@
        <height>51</height>
       </rect>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="segmentStyle">
       <enum>QLCDNumber::Flat</enum>
      </property>
@@ -1378,6 +1466,10 @@
        <width>131</width>
        <height>51</height>
       </rect>
+     </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
      </property>
      <property name="segmentStyle">
       <enum>QLCDNumber::Flat</enum>
@@ -1401,6 +1493,10 @@
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Box</enum>
      </property>
@@ -1417,7 +1513,7 @@
       <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
-      <double>1.234000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_37">
@@ -1504,6 +1600,10 @@
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Box</enum>
      </property>
@@ -1520,7 +1620,7 @@
       <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
-      <double>1.234000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_40">
@@ -1584,6 +1684,10 @@
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Box</enum>
      </property>
@@ -1600,7 +1704,7 @@
       <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
-      <double>1.234000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_42">
@@ -1664,6 +1768,10 @@
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Box</enum>
      </property>
@@ -1680,7 +1788,7 @@
       <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
-      <double>1.234000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_44">
@@ -1744,6 +1852,10 @@
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Box</enum>
      </property>
@@ -1760,7 +1872,7 @@
       <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
-      <double>1.234000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_46">
@@ -1824,6 +1936,10 @@
      <property name="layoutDirection">
       <enum>Qt::LeftToRight</enum>
      </property>
+     <property name="styleSheet">
+      <string notr="true">background-color: black;
+color: rgb(0, 255, 0);</string>
+     </property>
      <property name="frameShape">
       <enum>QFrame::Box</enum>
      </property>
@@ -1840,7 +1956,7 @@
       <enum>QLCDNumber::Flat</enum>
      </property>
      <property name="value" stdset="0">
-      <double>1.234000000000000</double>
+      <double>0.000000000000000</double>
      </property>
     </widget>
     <widget class="QLabel" name="label_48">
