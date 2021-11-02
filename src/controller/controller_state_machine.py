@@ -81,7 +81,8 @@ class ControllerStateMachine():
             if i > 0:
                 print("Warning: Number of extra msgs in queue: ", i)
 
-            q_meas = np.deg2rad(state.joint_angles)
+            #q_meas = np.deg2rad(state.joint_angles)
+            q_meas = state.joint_angles
             
             # Calculate current position            
             T_meas = kin.forkin(q_meas)

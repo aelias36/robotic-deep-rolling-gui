@@ -20,8 +20,10 @@ try:
 			if i > 0:
 				print("Number of extra msgs in queue: ", i)
 
-			q_c = np.deg2rad(state.joint_angles)
+			#q_c = np.deg2rad(state.joint_angles)
+			q_c = state.joint_angles
 			egm.send_to_robot(q_c)
+			print(state.joint_angles)
 
 except KeyboardInterrupt:
 	raise
