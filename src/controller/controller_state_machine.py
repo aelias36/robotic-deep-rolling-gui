@@ -28,12 +28,38 @@ class ControllerStateMachine():
         self.gui.status_disp.setText(self.state)
         self.gui.status_disp.setStyleSheet("QLineEdit {background-color: red;}")
 
+        work_R = np.eye(3)
+        work_p = np.array([0.0, 0.0, 0.0])
+        self.work_offset = rox.Transform(work_R, work_p)
+
+        # Set up workpiece offset buttons
+        self.gui.wp_os_x.valueChanged.connect(self.update_wp_os)
+        self.gui.wp_os_y.valueChanged.connect(self.update_wp_os)
+        self.gui.wp_os_z.valueChanged.connect(self.update_wp_os)
+        self.gui.wp_os_rx.valueChanged.connect(self.update_wp_os)
+        self.gui.wp_os_ry.valueChanged.connect(self.update_wp_os)
+        self.gui.wp_os_rz.valueChanged.connect(self.update_wp_os)
+
         self.local_robot_position = None
         self.last_q = None
 
-        work_R = np.eye(3)
-        work_p = np.array([1, 1, 0])
-        self.work_offset = rox.Transform(work_R, work_p)
+        
+
+    def update_wp_os(self, val):
+        rx = np.deg2rad(self.gui.wp_os_rx.value())
+        ry = np.deg2rad(self.gui.wp_os_ry.value())
+        rz = np.deg2rad(self.gui.wp_os_rz.value())
+
+        #self.work_offset.R = rox.rot([0,0,1], rz).dot( rox.rot([0,1,0], ry)).dot(rox.rot([1,0,0], rx))
+        #print(rox.rot([0,0,1], rz))
+
+        self.work_offset.R = rox.rpy2R([rx, ry, rz])
+
+        self.work_offset.p[0] = self.gui.wp_os_x.value()
+        self.work_offset.p[1] = self.gui.wp_os_y.value()
+        self.work_offset.p[2] = self.gui.wp_os_z.value()
+
+        print(self.work_offset)
 
     def start_loop(self):
         self.thread = threading.Thread(target = self.state_machine_loop)
@@ -82,8 +108,8 @@ class ControllerStateMachine():
                 else: # previous msg was end of queue
                     break
             
-            if i > 0:
-                print("Warning: Extra msgs in queue: ", i)
+            # if i > 0:
+            #     print("Warning: Extra msgs in queue: ", i)
 
             t_0 = time.time()
             
@@ -161,8 +187,10 @@ class ControllerStateMachine():
             # Rotate velocity command based on reference frame
             jog_ref_frame_num =  self.gui.jog_ref_frame_dial.value() 
             if jog_ref_frame_num == 0: # workpiece
-                if v_des is not None or v_rot_des is not None:
-                    print("Warning: jogging in workpiece frame not implemented - jogging in world frame instead") # TODO
+                if v_des is not None:
+                    v_des = self.work_offset.R.dot(v_des) 
+                if v_rot_des is not None:
+                    v_rot_des = self.work_offset.R.dot(v_rot_des)
             elif jog_ref_frame_num == 1: # world
                 pass # no need to adjust - already in world frame
             elif jog_ref_frame_num == 2: # tool
