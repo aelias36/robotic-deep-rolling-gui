@@ -28,10 +28,13 @@ t_1 = time.time()
 R = rox.rot([1,0,0], np.pi)
 
 for i in range(N):
-  p = np.random.rand(3)*0.1 + np.array([1.0, 1.0, 1.0])
+  p = np.random.rand(3)*0.1 + np.array([1.0, 1.0, 1.5])
   q = kin.invkin(R,p)
 
 t_2 = time.time()
+print(q)
+
+print("Computation time as proportion of 0.004 sec (avg over", N, "samples)")
 
 print("Forward Kinematics:")
 print((t_1 - t_0)/N/0.004 * 100.0, "%")
