@@ -46,6 +46,22 @@ class FTSim(object):
 
         return ft
 
+def test_2():
+    # Some extra test for rolling on a plane
+    
+    # Only apply force in the Z direction
+    k = 1e5
+    ft_sensor = FTSim([0,0,k])
+    
+    # Should be some force
+    print(ft_sensor.read_ft_streaming([0,0,-0.01]))
+    # Should be double force
+    print(ft_sensor.read_ft_streaming([0,0,-0.02]))
+    # Should be no force
+    print(ft_sensor.read_ft_streaming([0,0,+0.01]))
+    print(ft_sensor.read_ft_streaming([-1,-2,+0.01]))
+
+
 if __name__ == '__main__':
 
     # Example for ft simulation
@@ -64,3 +80,5 @@ if __name__ == '__main__':
     print("Force y", ft[4])
     print("Force z", ft[5])
     print("============")
+
+    test_2()
