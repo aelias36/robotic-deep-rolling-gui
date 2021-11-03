@@ -1084,7 +1084,7 @@ color: rgb(0, 255, 0);</string>
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_14">
+    <widget class="QLCDNumber" name="wp_r">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -1127,7 +1127,7 @@ color: rgb(0, 255, 0);</string>
       <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_15">
+    <widget class="QLCDNumber" name="wp_x">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -1257,7 +1257,7 @@ color: rgb(0, 255, 0);</string>
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_16">
+    <widget class="QLCDNumber" name="wp_rx">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -1277,7 +1277,7 @@ color: rgb(0, 255, 0);</string>
       <double>0.000000000000000</double>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_17">
+    <widget class="QLCDNumber" name="wp_y">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -1303,7 +1303,7 @@ color: rgb(0, 255, 0);</string>
       <double>0.000000000000000</double>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_18">
+    <widget class="QLCDNumber" name="wp_z">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -1438,7 +1438,7 @@ color: rgb(0, 255, 0);</string>
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_19">
+    <widget class="QLCDNumber" name="wp_ry">
      <property name="geometry">
       <rect>
        <x>60</x>
@@ -1458,7 +1458,7 @@ color: rgb(0, 255, 0);</string>
       <double>0.000000000000000</double>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_20">
+    <widget class="QLCDNumber" name="wp_rz">
      <property name="geometry">
       <rect>
        <x>60</x>

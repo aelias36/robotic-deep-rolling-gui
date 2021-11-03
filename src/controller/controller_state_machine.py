@@ -31,6 +31,10 @@ class ControllerStateMachine():
         self.local_robot_position = None
         self.last_q = None
 
+        work_R = np.eye(3)
+        work_p = np.array([1, 1, 0])
+        self.work_offset = rox.Transform(work_R, work_p)
+
     def start_loop(self):
         self.thread = threading.Thread(target = self.state_machine_loop)
         self.thread.start()
@@ -77,10 +81,12 @@ class ControllerStateMachine():
                     i += 1
                 else: # previous msg was end of queue
                     break
-
+            
             if i > 0:
-                print("Warning: Number of extra msgs in queue: ", i)
+                print("Warning: Extra msgs in queue: ", i)
 
+            t_0 = time.time()
+            
             #q_meas = np.deg2rad(state.joint_angles)
             q_meas = state.joint_angles
             
@@ -100,6 +106,18 @@ class ControllerStateMachine():
             self.gui.world_rx.display(k[0])
             self.gui.world_ry.display(k[1])
             self.gui.world_rz.display(k[2])
+
+            T_meas_work_frame = self.work_offset.inv() * T_meas
+
+            self.gui.wp_x.display(T_meas_work_frame.p[0])
+            self.gui.wp_y.display(T_meas_work_frame.p[1])
+            self.gui.wp_z.display(T_meas_work_frame.p[2])
+
+            k, theta = rox.R2rot(T_meas_work_frame.R)
+            self.gui.wp_r.display(np.rad2deg(theta))
+            self.gui.wp_rx.display(k[0])
+            self.gui.wp_ry.display(k[1])
+            self.gui.wp_rz.display(k[2])
 
             # Calcualate desired velocity
             jog_linear_rate = 1e-3 * self.gui.jog_linear_rate.value() # mm -> m
@@ -161,12 +179,15 @@ class ControllerStateMachine():
             if v_rot_des is not None:
                 self.local_robot_position.R = rox.rot(v_rot_des, jog_angular_rate * TIMESTEP).dot(self.local_robot_position.R)
 
+            
             # Use local robot state to command real robot
             q_c = kin.invkin(self.local_robot_position.R,self.local_robot_position.p, last_joints = self.last_q)[0]
-            
             self.last_q = q_c
+            
             self.egm.send_to_robot(q_c)
-        
+
+            t_1 = time.time()
+            #print((t_1 - t_0) / TIMESTEP * 100, '%')
         else: # EGM timed out
             self.state = "disconnected"
             self.gui.status_disp.setText(self.state)
