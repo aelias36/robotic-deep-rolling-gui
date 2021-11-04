@@ -18,6 +18,9 @@ from general_robotics_toolbox.general_robotics_toolbox import fwdkin
 import numpy as np
 import general_robotics_toolbox as rox
 from random import random as rand
+import time
+
+import QuadProg as qp
 
 ex = np.array([1,0,0])
 ey = np.array([0,1,0])
@@ -85,28 +88,48 @@ def invkin(R, p, last_joints=None):
         if len(last_joints) != 6:
             raise ValueError("Last robot joint angles must have six joint values.")
 
+    st = time.perf_counter_ns()
     abb_robot = abb_irb_6640_255()
+    et = time.perf_counter_ns()
+    print("Set up robot Time Elapse:",float(et-st)/1e6)
+    
     T = rox.Transform(R,p)
 
-    return rox.robot6_sphericalwrist_invkin(abb_robot,T,last_joints=last_joints)
+    st = time.perf_counter_ns()
+    q = rox.robot6_sphericalwrist_invkin(abb_robot,T,last_joints=last_joints)
+    et = time.perf_counter_ns()
+    print("IK Time Elapse:",float(et-st)/1e6)
+
+    spatial_velocity_command = np.array([0, 0, 0, 10, 10, 1])
+    quadprog = qp.QuadProg(abb_robot)
+    st = time.perf_counter_ns()
+    joints_vel = quadprog.compute_joint_vel_cmd_qp(np.deg2rad(q[0]), spatial_velocity_command)
+    et = time.perf_counter_ns()
+    print("QP Time Elapse:",float(et-st)/1e6)
+
+    return q
 
 def test_func():
     
-    # q1 = np.deg2rad(rand()*340-170)
-    # q2 = np.deg2rad(rand()*150-65)
-    # q3 = np.deg2rad(rand()*250-180)
-    # q4 = np.deg2rad(rand()*600-300)
-    # q5 = np.deg2rad(rand()*240-120)
-    # q6 = np.deg2rad(rand()*720-360)
+    q1 = np.deg2rad(rand()*340-170)
+    q2 = np.deg2rad(rand()*150-65)
+    q3 = np.deg2rad(rand()*250-180)
+    q4 = np.deg2rad(rand()*600-300)
+    q5 = np.deg2rad(rand()*240-120)
+    q6 = np.deg2rad(rand()*720-360)
 
-    q1,q2,q3,q4,q5,q6 = 0.,0.,0.,0.,0.,0.
+    # q1,q2,q3,q4,q5,q6 = 0.,0.,0.,0.,0.,0.
 
     print("Initial q")
     print(np.array([q1, q2, q3, q4, q5, q6]))
     T = forkin(np.array([q1, q2, q3, q4, q5, q6]))
     print("Robot T:")
     print(T)
+
+    st = time.perf_counter_ns()
     q = invkin(T.R,T.p)
+    et = time.perf_counter_ns()
+    print("Total Time Elapse:",float(et-st)/1e6)
     print("Inv q:")
     print(q)
 
