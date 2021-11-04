@@ -4,12 +4,12 @@ import time
 
 egm = rpi_abb_irc5.EGM()
 
-last_time = time.time()
+last_time = time.perf_counter()
 
 try:
 	while True:
 		res, state = egm.receive_from_robot(.1)
-		new_time = time.time()
+		new_time = time.perf_counter()
 		print((new_time - last_time)/0.004 * 100)
 		last_time = new_time
 		if res:

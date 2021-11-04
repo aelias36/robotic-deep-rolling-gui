@@ -10,7 +10,9 @@ import general_robotics_toolbox as rox
 
 N = 1000
 
-t_0 = time.time()
+#t_0 = time.time()
+t_0 = time.perf_counter()
+
 
 for i in range(N):
     q1 = np.deg2rad(rand()*340-170)
@@ -23,7 +25,8 @@ for i in range(N):
     T = kin.forkin(q)
 
 
-t_1 = time.time()
+#t_1 = time.time()
+t_1 = time.perf_counter()
 
 R = rox.rot([1,0,0], np.pi)
 
@@ -31,7 +34,8 @@ for i in range(N):
   p = np.random.rand(3)*0.1 + np.array([1.0, 1.0, 1.5])
   q = kin.invkin(R,p)
 
-t_2 = time.time()
+#t_2 = time.time()
+t_2 = time.perf_counter()
 print(q)
 
 print("Computation time as proportion of 0.004 sec (avg over", N, "samples)")
