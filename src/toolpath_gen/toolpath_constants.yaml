@@ -1,0 +1,19 @@
+#Geometry
+part_length: 7.62e-2 # m (3 in)
+part_width: 2.54e-2 # m (1 inch)
+margin_width: 2.0e-3 # m
+#margin_length: # Length of unrolled area on each side (Y / stepover direction)
+#stepover: # Width between centers of adjacent rolls (in Y direction)
+hover_height: 5.0e-3 # m
+
+#Force Profile:
+f_load_unload_rate: # Rate w.r.t. to ramp force during loading and unloading
+#f_max: # Maximum force, used during constant force section
+f_min_prop: 0.5
+f_ramp_dist: 1.112e-3
+
+#Velocity Profile:
+accel: 0.1 # m/s*2
+v_slow: 2.0e-3 # m/s
+v_fast: 67.73e-3 # m/s
+v_slow_dist: 2.54e-3 # m (0.1 inch)
