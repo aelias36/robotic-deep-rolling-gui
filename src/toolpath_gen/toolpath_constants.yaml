@@ -17,3 +17,4 @@ accel: 0.2 # m/s*2
 v_slow: 2.0e-3 # m/s
 v_fast: 67.73e-3 # m/s
 v_slow_dist: 2.54e-3 # m (0.1 inch)
+v_stepover: 67.73e-3 # m/s

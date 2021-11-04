@@ -3,22 +3,30 @@ import numpy as np
 
 
 def main():
-	file = "test_toolpath.txt"
+	file = "test_force_toolpath.txt"
 	with open(file) as f:
 		lines = f.readlines()
 
 	x = []
 	y = []
 	z = []
+	f = []
 
 	for line in lines:
 		line_sep = line.split()
-		x.append(float(line_sep[1]))
-		y.append(float(line_sep[2]))
-		z.append(float(line_sep[3]))
+		if line_sep[0] == "forceCtrlZ":
+			x.append(float(line_sep[1]))
+			y.append(float(line_sep[2]))
+			z.append(z[-1])
+			f.append(float(line_sep[3]))
+		elif line_sep[0] == "posCtrl" or line_sep[0] == "moveL":
+			x.append(float(line_sep[1]))
+			y.append(float(line_sep[2]))
+			z.append(float(line_sep[3]))
+			f.append(0.0)
 
-	ax = plt.axes(projection='3d')	
-	ax.plot3D(np.array(x), np.array(y), np.array(z))
+	#ax = plt.axes(projection='3d')	
+	#ax.plot3D(np.array(x), np.array(y), np.array(z))
 
 	# plt.locator_params(axis='y', nbins=6)
 	# plt.locator_params(axis='x', nbins=10)
@@ -26,8 +34,21 @@ def main():
 	# axis[0].plot(np.array(x))
 	# axis[1].plot(np.array(y))
 	# axis[2].plot(np.array(z))
-	set_axes_equal(ax)
+	#set_axes_equal(ax)
+	
+	plt.plot(x, y)
+	plt.title('XY')
+	plt.figure()
+	plt.plot(x)
+	plt.title('X')
+	plt.figure()
+	plt.plot(y)
+	plt.title('Y')
+	plt.figure()
+	plt.plot(f)
+	plt.title('Force')
 	plt.show()
+	
 
 # https://newbedev.com/matplotlib-equal-unit-length-with-equal-aspect-ratio-z-axis-is-not-equal-to-x-and-y
 def set_axes_equal(ax):
