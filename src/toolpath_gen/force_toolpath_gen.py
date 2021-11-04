@@ -50,6 +50,7 @@ Alex Elias
 '''
 
 import numpy as np
+import yaml
 
 TIMESTEP = 0.004
 
@@ -67,12 +68,57 @@ class ForceToolpathGen():
 		self.accelerated_to_fast = False
 		self.accel_fast_dist = None
 
-	def gen_single_roll():
+
+	def gen_single_roll(self):
 		# return True -> go to next mode
 		# return False -> repeat same mode
-		pass
+		self.x = self.params['margin_length']
+		mode = "load"
 
-	def load():
+		x_hist = []
+		force_hist = []
+
+		print("starting load")
+		while True:
+			# Write down current state
+			x_hist.append(self.x)
+			force_hist.append(self.force)
+			# Evolve state
+			if mode == "load":
+				if self.load():
+					mode = "ramp_up"
+					print("starting ramp_up")
+					print("vel:", self.vx)
+					print("pos:", self.x)
+					print("force:", self.force)
+
+			elif mode == "ramp_up":
+				if self.ramp_up():
+					mode = "constant_force"
+					print("starting constant_force")
+					print("accel_slow_dist:", self.accel_slow_dist)
+					print("vel:", self.vx)
+					print("pos:", self.x)
+					print("force:", self.force)
+
+			elif mode == "constant_force":
+				if self.constant_force():
+					mode = "ramp_down"
+					print("starting ramp_down")
+			elif mode == "ramp_down":
+				if self.ramp_down():
+					mode = "unload"
+					print("starting unload")
+			elif mode == "unload":
+				if self.unload():
+					break
+		
+		x_hist.append(self.x)
+		force_hist.append(self.force)
+
+		return x_hist, force_hist
+
+	def load(self):
 		self.force += self.params['f_load_unload_rate'] * TIMESTEP
 		
 		if self.force >= self.params['f_min_prop'] * self.params['f_max']:
@@ -81,11 +127,11 @@ class ForceToolpathGen():
 		
 		return False
 
-	def ramp_up():
+	def ramp_up(self):
 		# Increase velocity as needed
 		if self.vx < self.params['v_slow']:
 			self.vx += self.params['accel'] * TIMESTEP
-			if self.vx > self.params['v_slow']:
+			if self.vx >= self.params['v_slow']:
 				self.vx = self.params['v_slow']
 				if self.accel_slow_dist is None:
 					self.accel_slow_dist = self.x
@@ -96,24 +142,25 @@ class ForceToolpathGen():
 		# Force is based on distance
 		dist_from_edge = self.x - self.params['margin_length']
 		if dist_from_edge < self.params['f_ramp_dist']:
-			self.force = dist_from_edge / self.params['f_ramp_dist'] * self.params['f_max']
+			prop = dist_from_edge / self.params['f_ramp_dist'] 
+			self.force = prop * self.params['f_max'] + (1-prop) * self.params['f_min_prop'] * self.params['f_max']
 		else:
 			self.force = self.params['f_max']
 			return True
 
 		return False
 
-	def constant_force():
+	def constant_force(self):
 		# Start increasing velocity after v_slow_dist
 		if not self.accelerated_to_fast and self.x >= self.params['margin_length'] + self.params['v_slow_dist']:
 			self.vx += self.params['accel'] * TIMESTEP
-			if self.vx > self.params['v_fast']:
+			if self.vx >= self.params['v_fast']:
 				self.vx = self.params['v_fast']
-				self.acclerated_to_fast = True
+				self.accelerated_to_fast = True
 				self.accel_fast_dist = self.x
 
 		# Decrease velocity once we reach a symmetric point
-		if self.x >= self.params['part_length'] - self.accel_fast_dist:
+		if self.accelerated_to_fast and self.x >= self.params['part_length'] - self.accel_fast_dist:
 			self.vx -= self.params['accel'] * TIMESTEP
 			if self.vx < self.params['v_slow']:
 				self.vx = self.params['v_slow']
@@ -126,7 +173,7 @@ class ForceToolpathGen():
 
 		return False
 
-	def ramp_down():
+	def ramp_down(self):
 		# Decrease velocity once we reach a symmetric point
 		if self.x >= self.params['part_length'] - self.accel_slow_dist:
 			self.vx -= self.params['accel'] * TIMESTEP
@@ -138,12 +185,13 @@ class ForceToolpathGen():
 
 		# Force based on distance
 		dist_from_edge = self.params['part_length'] - self.params['margin_length'] - self.x
-		self.force = dist_from_edge / self.params['f_ramp_dist'] * self.params['f_max']
+		prop = dist_from_edge / self.params['f_ramp_dist'] 
+		self.force = prop * self.params['f_max'] + (1-prop) * self.params['f_min_prop'] * self.params['f_max']
 
 		return self.vx == 0
 
 
-	def unload():
+	def unload(self):
 		self.force -= self.params['f_load_unload_rate'] * TIMESTEP
 		
 		if self.force < 0:
@@ -154,7 +202,47 @@ class ForceToolpathGen():
 
 
 def main():
-	pass
+	with open('toolpath_constants.yaml', 'r') as file:
+		params = yaml.safe_load(file)
+
+	params['margin_length'] = 1e-3
+	params['stepover'] = .01e-3
+	params['f_max'] = 1000
+
+	print(params)
+
+	gen = ForceToolpathGen(params)
+	x_hist, force_hist = gen.gen_single_roll()
+	#print(x_hist)
+	#print(force_hist)
+
+	print(params['part_length'] - params['margin_length'])
+	print(x_hist[-1])
+	print(params['part_length'] - params['margin_length'] - x_hist[-1])
+
+	import matplotlib.pyplot as plt
+	plt.plot(np.diff(x_hist) / TIMESTEP)
+	plt.ylabel('Speed (m/s)')
+	plt.xlabel('Time (sample #)')
+
+	plt.figure()
+	plt.plot(x_hist)
+	plt.ylabel('Position (m)')
+	plt.xlabel('Time (sample #)')
+
+	plt.figure()
+	plt.plot(force_hist)
+	plt.ylabel('Force (N)')
+	plt.xlabel('Time (sample #)')
+
+	plt.figure()
+	plt.plot(x_hist, force_hist)
+	plt.ylabel('Force (N)')
+	plt.xlabel('Position (m)')
+
+
+	plt.show()
+
 
 if __name__ == '__main__':
 	main()
