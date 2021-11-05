@@ -11,6 +11,7 @@ forceCtrlZ (single timestep)
 
 posCtrl (single timestep)
 	6-d position for one point in time
+	posCtrl X Y Z q0 qx qy qz
 
 unloadZ (multiple timesteps and blocking)
 	move robot until force is reduced
