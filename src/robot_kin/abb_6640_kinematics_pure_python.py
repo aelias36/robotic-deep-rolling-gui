@@ -19,6 +19,9 @@ import numpy as np
 import general_robotics_toolbox as rox
 from random import random as rand
 import time
+import math
+
+from numba import jit
 
 import QuadProg as qp
 
@@ -26,9 +29,10 @@ ex = np.array([1,0,0])
 ey = np.array([0,1,0])
 ez = np.array([0,0,1])
 
+# @jit(nopython=True)
 def abb_irb_6640_255():
 
-    H = np.array([ez, ey, ey, ex, ey, ex]).T
+    H = np.array((ez, ey, ey, ex, ey, ex)).T
     P = np.array([0*ez, 0.32*ex+0.78*ez, 1.075*ez, 1.1425*ex+0.2*ez, 0*ex, 0*ey, 0.2*ex]).T
     # P = np.array([0.78*ez, 0.32*ex, 1.075*ez, 0.2*ez, 1.1425*ex, 0.2*ex, 0*ex]).T
     joint_type = np.array([0,0,0,0,0,0])
@@ -37,7 +41,8 @@ def abb_irb_6640_255():
     joint_vel_limit = np.deg2rad(np.array([100,90,90,170,120,190]))
 
     p_tool = np.array([0,0,0])
-    R_tool = rox.rot(ey, np.pi/2.0)
+    # R_tool = rox.rot(ey, np.pi/2.0)
+    R_tool = rox.rot(ey, 0)
 
     return rox.Robot(H,P,joint_type,joint_lower_limit,joint_upper_limit,joint_vel_limit, R_tool=R_tool, p_tool=p_tool)
 
@@ -60,6 +65,7 @@ def forkin(q):
     
     return rox.fwdkin(abb_robot,q)
 
+# @jit(nopython=True)
 def invkin(R, p, last_joints=None):
     
     """
@@ -118,7 +124,7 @@ def test_func():
     q5 = np.deg2rad(rand()*240-120)
     q6 = np.deg2rad(rand()*720-360)
 
-    # q1,q2,q3,q4,q5,q6 = 0.,0.,0.,0.,0.,0.
+    q1,q2,q3,q4,q5,q6 = math.pi/2,math.pi/8,math.pi/10,math.pi/10,math.pi/8,math.pi/10
 
     print("Initial q")
     print(np.array([q1, q2, q3, q4, q5, q6]))
@@ -126,12 +132,12 @@ def test_func():
     print("Robot T:")
     print(T)
 
-    st = time.perf_counter_ns()
-    q = invkin(T.R,T.p)
-    et = time.perf_counter_ns()
-    print("Total Time Elapse:",float(et-st)/1e6)
-    print("Inv q:")
-    print(q)
+    # st = time.perf_counter_ns()
+    # q = invkin(T.R,T.p)
+    # et = time.perf_counter_ns()
+    # print("Total Time Elapse:",float(et-st)/1e6)
+    # print("Inv q:")
+    # print(q)
 
 if __name__ == '__main__':
     test_func()
