@@ -21,9 +21,9 @@ from random import random as rand
 import time
 import math
 
-from numba import jit
+#from numba import jit
 
-import QuadProg as qp
+#import QuadProg as qp
 
 ex = np.array([1,0,0])
 ey = np.array([0,1,0])
@@ -41,8 +41,8 @@ def abb_irb_6640_255():
     joint_vel_limit = np.deg2rad(np.array([100,90,90,170,120,190]))
 
     p_tool = np.array([0,0,0])
-    # R_tool = rox.rot(ey, np.pi/2.0)
-    R_tool = rox.rot(ey, 0)
+    R_tool = rox.rot(ey, np.pi/2.0)
+    # R_tool = rox.rot(ey, 0)
 
     return rox.Robot(H,P,joint_type,joint_lower_limit,joint_upper_limit,joint_vel_limit, R_tool=R_tool, p_tool=p_tool)
 
