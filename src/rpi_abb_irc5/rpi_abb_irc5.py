@@ -97,12 +97,50 @@ class EGM(object):
 
         return True, EGMRobotState(joint_angles, rapid_running, motors_on, robot_message)
 
+    def send_to_robot_cart(self, xyz, quat):
+        if not self.egm_addr:
+            return False
+
+        self.send_sequence_number+=1
+
+        sensorMessage=egm_pb2.EgmSensor()
+
+        header=sensorMessage.header
+        header.mtype=egm_pb2.EgmHeader.MessageType.Value('MSGTYPE_CORRECTION')
+        header.seqno=self.send_sequence_number
+        self.send_sequence_number+=1
+
+        planned=sensorMessage.planned
+
+        # if joint_angles is not None:
+        #     joint_angles2 = list(np.rad2deg(joint_angles))
+        #     planned.joints.joints.extend(joint_angles2)
+
+        if xyz is not None and quat is not None:
+            planned.cartesian.pos.x = xyz[0]
+            planned.cartesian.pos.y = xyz[1]
+            planned.cartesian.pos.z = xyz[2]
+            planned.cartesian.orient.u0 = quat[0]
+            planned.cartesian.orient.u1 = quat[1]
+            planned.cartesian.orient.u2 = quat[2]
+            planned.cartesian.orient.u3 = quat[3]
+
+        buf=sensorMessage.SerializeToString()
+
+        try:
+            self.socket.sendto(buf, self.egm_addr)
+        except:
+            return False
+
+        return True
+
+
     def send_to_robot(self, joint_angles):
 
         if not self.egm_addr:
             return False
 
-        self.send_sequence_number+=1
+        #self.send_sequence_number+=1
 
         sensorMessage=egm_pb2.EgmSensor()
 

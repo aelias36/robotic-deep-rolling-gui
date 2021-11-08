@@ -14,6 +14,8 @@ posCtrl (single timestep)
 	posCtrl X Y Z q0 qx qy qz
 
 unloadZ (multiple timesteps and blocking)
-	move robot until force is reduced
+	move robot until Z height is reached
+	make sure tool is no longer in contact
+	unloadZ Z
 
-# Comments line
+# Comment line

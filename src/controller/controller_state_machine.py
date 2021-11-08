@@ -3,7 +3,9 @@ STATES
 
 disconnected - connection to EGM has timed out, trying to reconnect
 manual_jog - control robot velocity through GUI buttons
-
+toolpath - control robot based on toolpath execution
+simulator - simulate the force readings so force control still works with RobotStudio
+zero force - hover above the workpiece during force control commands
 
 
 '''
@@ -15,6 +17,7 @@ import time
 import numpy as np
 from robot_kin import abb_6640_kinematics as kin
 import general_robotics_toolbox as rox
+from controller import toolpath_control
 
 TIMESTEP = 0.004
 
@@ -22,6 +25,15 @@ class ControllerStateMachine():
     def __init__(self, egm, gui):
         self.egm = egm
         self.gui = gui
+        self.tp_ctrl = toolpath_control.ToolpathControl()
+        self.tp_ctrl.params = {
+            "force_ctrl_damping": 100.0,
+            "force_epsilon": 10.0,
+            "moveL_speed_lin": 1.0,
+            "moveL_speed_ang": 1.0,
+            "load_speed": 1.0,
+            "unload_speed": 1.0
+            }
 
         self.is_running = True
         self.state = "disconnected"
@@ -43,7 +55,6 @@ class ControllerStateMachine():
         self.local_robot_position = None
         self.last_q = None
 
-        
 
     def update_wp_os(self, val):
         rx = np.deg2rad(self.gui.wp_os_rx.value())
@@ -73,7 +84,6 @@ class ControllerStateMachine():
         while self.is_running:
             self.step()
 
-
     def step(self):
         if self.state == "disconnected":
             self.state_disconnected()
@@ -81,9 +91,17 @@ class ControllerStateMachine():
         elif self.state == "manual_jog":
             self.state_manual_jog()
 
+        elif self.state == "toolpath":
+            self.state_toolpath()
+
+        elif self.state == "simulator":
+            self.state_toolpath(simulate_force = True, zero_force = False)
+
+        elif self.state == "zero_force":
+            self.state_toolpath(simulate_force = False, zero_force = True)
+
         else:
             raise ValueError("Wrong state: " + str(self.state))
-
 
     def state_disconnected(self):
         res, state = self.egm.receive_from_robot(.1)
@@ -111,16 +129,23 @@ class ControllerStateMachine():
             # if i > 0:
             #     print("Warning: Extra msgs in queue: ", i)
 
-            t_0 = time.time()
+            t_0 = time.perf_counter()
             
             #q_meas = np.deg2rad(state.joint_angles)
-            q_meas = state.joint_angles
+            #q_meas = state.joint_angles
             
             # Calculate current position            
-            T_meas = kin.forkin(q_meas)
+            # T_meas = kin.forkin(q_meas)
+            # if self.local_robot_position is None:
+            #     self.local_robot_position = T_meas
+            #     self.last_q = q_meas
+
+            fb = state.robot_message.feedBack.cartesian
+            pos = np.array([fb.pos.x, fb.pos.y, fb.pos.z])/1000.0 # mm -> m
+            quat = [fb.orient.u0, fb.orient.u1, fb.orient.u2, fb.orient.u3]
+            T_meas = rox.Transform(rox.q2R(quat), pos)
             if self.local_robot_position is None:
                 self.local_robot_position = T_meas
-                self.last_q = q_meas
 
             # Display current position
             self.gui.world_x.display(T_meas.p[0])
@@ -209,17 +234,34 @@ class ControllerStateMachine():
 
             
             # Use local robot state to command real robot
-            q_c = kin.invkin(self.local_robot_position.R,self.local_robot_position.p, last_joints = self.last_q)[0]
-            self.last_q = q_c
+            #q_c = kin.invkin(self.local_robot_position.R,self.local_robot_position.p, last_joints = self.last_q)[0]
+            #self.last_q = q_c
             
-            self.egm.send_to_robot(q_c)
+            #self.egm.send_to_robot(q_c)
 
-            t_1 = time.time()
-            #print((t_1 - t_0) / TIMESTEP * 100, '%')
+            pos = self.local_robot_position.p * 1000.0 # m -> mm
+            quat = rox.R2q(self.local_robot_position.R)
+            t_1 = time.perf_counter()
+            send_res = self.egm.send_to_robot_cart(pos, quat)
+
+            
+            print((t_1 - t_0) / TIMESTEP * 100, '%')
         else: # EGM timed out
             self.state = "disconnected"
             self.gui.status_disp.setText(self.state)
             self.gui.status_disp.setStyleSheet("QLineEdit {background-color: red;}")
+
+    def state_toolpath(self, simulate_force = False, zero_force = False):
+        # TODO make sure toolpath is loaded
+        # TODO dialog box to open toolpath
+        # TODO when loading, keep track of length of toolpath
+        # TODO during execution, update program counter display
+        # TODO start with START button, stop with STOP button, hold with HOLD button
+        #   Hold - request to hold is set with button,
+        #   operation stops when force control section ends
+        # TODO disable sections of GUI when running
+
+        is_done, tool_pose = tp_ctrl.step(tool_pose, force)
 
 
 def main():

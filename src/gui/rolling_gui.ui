@@ -2471,7 +2471,7 @@ color: rgb(0, 255, 0);</string>
       </font>
      </property>
      <property name="text">
-      <string>Normal</string>
+      <string>Toolpath</string>
      </property>
      <property name="alignment">
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>

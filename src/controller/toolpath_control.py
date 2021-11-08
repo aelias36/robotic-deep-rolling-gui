@@ -8,11 +8,13 @@ along with force feedback and the previous desired tool pose
 PARAMETERS
 
 force_ctrl_damping: damping for force control
-	Higher damping means less velocity for the same force
-force_epsilon: smallest value of force needed be considered touching
-	Make high enough 
+    Higher damping means less velocity for the same force
+force_epsilon: smallest value of force to be considered touching
+    Make high enough to avoid problems with sensor noise
 moveL_speed_lin: linear tool speed during moveL commands
 moveL_speed_ang: angular tool speed during moveL commands
+load_speed: tool speed during force loading
+unload_speed: tool speed duruing force unloading
 '''
 
 
@@ -24,127 +26,248 @@ import numpy as np
 TIMESTEP = 0.004
 
 class ToolpathControl():
-	def __init__(self):
-		self.commands = []
-		self.program_counter = 0
+    def __init__(self):
+        self.commands = []
+        self.program_counter = 0
+
+        self.CmdMoveL = namedtuple("CmdMoveL", "x y z q0 qx qy qz")
+        self.CmdLoadZ = namedtuple("CmdLoadZ", "")
+        self.CmdForceCtrlZ = namedtuple("CmdForceCtrlZ", "x y fz q0 qx qy qz")
+        self.CmdPosCtrl = namedtuple("CmdPosCtrl", "x y z q0 qx qy qz")
+        self.CmdUnloadZ = namedtuple("CmdUnloadZ", "z")
+
+    def load_toolpath(self, toolpath_lines):
+        self.commands = []
+        self.program_counter = 0
+
+        for line in toolpath_lines:
+            line_sep = line.split()
+            if line[0] == "#": # Comment
+                continue
+            elif line_sep[0] == "moveL":
+                self.commands.append(
+                    self.CmdMoveL(*[float(x) for x in line_sep[1:]]))
+
+            elif line_sep[0] == "LoadZ":
+                self.commands.append(
+                    self.CmdLoadZ())
+
+            elif line_sep[0] == "forceCtrlZ":
+                self.commands.append(
+                    self.CmdForceCtrlZ(*[float(x) for x in line_sep[1:]]))
+
+            elif line_sep[0] == "posCtrl":
+                self.commands.append(
+                    self.CmdPosCtrl(*[float(x) for x in line_sep[1:]]))
+
+            elif line_sep[0] == "unloadZ":
+                self.commands.append(
+                    self.CmdUnloadZ(*[float(x) for x in line_sep[1:]]))
+
+    def step(self, tool_pose, force):
+        # TODO check if a program is loaded
+
+        current_cmd = self.commands[self.program_counter]
+
+        # return True -> move to next cmd
+        # return False -> stay on command
+        if type(current_cmd) is self.CmdMoveL:
+            inc, T = self.moveL(current_cmd, tool_pose, force)
+
+        elif type(current_cmd) is self.CmdLoadZ:
+            inc, T = self.loadZ(tool_pose, force)
+
+        elif type(current_cmd) is self.CmdForceCtrlZ:
+            inc, T = self.forceCtrlZ(current_cmd, tool_pose, force)
+
+        elif type(current_cmd) is self.CmdPosCtrl:
+            inc, T = self.posCtrl(current_cmd)
+
+        elif type(current_cmd) is self.CmdUnloadZ:
+            inc, T = self.unloadZ(current_cmd, tool_pose, force)
+        
+        else:
+            raise ValueError('Wrong command type: ' + str(current_cmd))
+
+        # TODO check if we're at the end of the program
+        if inc:
+            self.program_counter += 1
+            if self.program_counter == len(self.commands) - 1:
+                return True, T
+
+        return False, T
+
+    def moveL(self, cmd, tool_pose, force):
+        # Calculate linear and angular errors
+        p_des = np.array([cmd.x, cmd.y, cmd.z])
+        R_des = rox.q2R([cmd.q0, cmd.qx, cmd.qy, cmd.qz])
+
+        pos_err = tool_pose.p - p_des
+        R_err = tool_pose.R.T.dot(R_des)
+        R_err_k, R_err_theta = rox.R2rot(R_err)
+
+        # Small error -> snap to correct position
+        # Big error -> reduce error with constant vel
+        pos_err_size = np.linalg.norm(pos_err)
+        if pos_err_size > self.params['moveL_speed_lin'] * TIMESTEP:
+            pos_err_dir = pos_err / pos_err_size
+            p = tool_pose.p - self.params['moveL_speed_lin'] * TIMESTEP * pos_err_dir
+            pos_is_done = False
+        else:
+            p = p_des
+            pos_is_done = True
+
+        if R_err_theta > self.params['moveL_speed_ang'] * TIMESTEP:
+            R = rox.rot(R_err_k, self.params['moveL_speed_ang'] * TIMESTEP).dot(tool_pose.R)
+            rot_is_done = False
+        else:
+            R = R_des
+            rot_is_done = True
+
+        return pos_is_done and rot_is_done, rox.Transform(R, p)
+
+    def loadZ(self, tool_pose, force):
+        # TODO make sure to tare F/T sensor
+        f_z_meas = force[5]
+        if f_z_meas < self.params['force_epsilon']:
+            p = tool_pose.p - self.params['load_speed'] * TIMESTEP
+            return False, rox.Transform(tool_pose.R, p)
+        else:
+            return True, tool_pose
+
+    def forceCtrlZ(self, cmd, tool_pose, force):
+        # TODO limit to force_epsilon so we don't lose contact
+
+        # TODO lookahead
+        f_z_meas = force[5]
+        R = rox.q2R([cmd.q0, cmd.qx, cmd.qy, cmd.qz])
+
+        # TODO make sure this sign makes sense
+        v_z = ( f_z_meas - cmd.fz ) / self.params['force_ctrl_damping']
+        z = tool_pose.p[2] + v_z * TIMESTEP
+
+        p = [cmd.x, cmd.y, z]
+        return True, rox.Transform(R, p)
 
 
-		self.CmdMoveL = namedtuple("CmdMoveL", "x y z q0 qx qy qz")
-		self.CmdLoadZ = namedtuple("CmdLoadZ", "")
-		self.CmdForceCtrlZ = namedtuple("CmdForceCtrlZ", "x y fz q0 qx qy qz")
-		self.CmdPosCtrl = namedtuple("CmdPosCtrl", "x y z q0 qx qy qz")
-		self.CmdUnloadZ = namedtuple("CmdUnloadZ", "")
+    def posCtrl(self, cmd):
+        R = rox.q2R([cmd.q0, cmd.qx, cmd.qy, cmd.qz])
+        p = [cmd.x, cmd.y, cmd.z]
+        
+        return True, rox.Transform(R,p)
 
-	def load_toolpath(self, toolpath_lines):
-		self.commands = []
-		self.program_counter = 0
+    def unloadZ(self, cmd, tool_pose, force):
+        f_z_meas = force[5]
+        p = tool_pose.p
+        if tool_pose.p[2] + self.params['unload_speed'] * TIMESTEP >= cmd.z:
+            p[2] = cmd.z
+            return True, rox.Transform(tool_pose.R, p)
+        else:
+            p[2] += self.params['unload_speed'] * TIMESTEP
+            return False, rox.Transform(tool_pose.R, p)
 
-		for line in toolpath_lines:
-			line_sep = line.split()
-			if line[0] == "#": # Comment
-				continue
-			elif line_sep[0] == "moveL":
-				self.commands.append(
-					self.CmdMoveL(*[float(x) for x in line_sep[1:]]))
+def timing_test():
+    import time
 
-			elif line_sep[0] == "LoadZ":
-				self.commands.append(
-					self.CmdLoadZ())
+    file = "../toolpath_gen/test_force_toolpath.txt"
+    with open(file) as f:
+        lines = f.readlines()
 
-			elif line_sep[0] == "forceCtrlZ":
-				self.commands.append(
-					self.CmdForceCtrlZ(*[float(x) for x in line_sep[1:]]))
+    tp_ctrl = ToolpathControl()
+    tp_ctrl.load_toolpath(lines)
 
-			elif line_sep[0] == "posCtrl":
-				self.commands.append(
-					self.CmdPosCtrl(*[float(x) for x in line_sep[1:]]))
+    tp_ctrl.params = {
+        "force_ctrl_damping": 100.0,
+        "force_epsilon": 10.0,
+        "moveL_speed_lin": 1.0,
+        "moveL_speed_ang": 1.0,
+        "load_speed": 1.0,
+        "unload_speed": 1.0
+        }
 
-			elif line_sep[0] == "unloadZ":
-				self.commands.append(
-					self.CmdUnloadZ())
+    for i in range(20):
+        print(tp_ctrl.commands[i])
 
-	def step(self, tool_pose, force):
-		# TODO check if a program is loaded
+    R = rox.rot([0,0,1], np.deg2rad(90))
+    p = [0,0,0]
+    tool_pose = rox.Transform(R,p)
+    force = np.array([0,0,0,0,0,0])
 
-		current_cmd = self.commands[self.program_counter]
+    is_done = False
+    t_0 = time.perf_counter()
+    i = 0
+    while not is_done:
+        is_done, tool_pose = tp_ctrl.step(tool_pose, force)
+        i +=1
+    t_1 = time.perf_counter()
 
-		# return True -> move to next cmd
-		# return False -> stay on command
-		if type(current_cmd) is self.CmdMoveL:
-			inc, T = self.moveL(current_cmd, tool_pose, force)
-
-		elif type(current_cmd) is self.CmdLoadZ:
-			inc, T = self.loadZ(tool_pose, force)
-
-		elif type(current_cmd) is self.CmdForceCtrlZ:
-			inc, T = self.forceCtrlZ(cmd, tool_pose, force)
-
-		elif type(current_cmd) is self.CmdPosCtrl:
-			inc, T = self.posCtrl(cmd)
-
-		elif type(current_cmd) is self.CmdUnloadZ:
-			inc, T = self.unloadZ(cmd, tool_pose, force)
-		
-		else:
-			raise ValueError('Wrong command type: ' + str(current_cmd))
-
-		# TODO check if we're at the end of the program
-		if inc:
-			self.program_counter += 1
-
-		return T
-
-	def moveL(self, cmd, tool_pose, force):
-		# Calculate linear and angular errors
-
-		# Small error -> snap to correct position
-		# Big error -> reduce error with constant vel
-
-		pass 
-
-	def loadZ(self, tool_pose, force):
-		# TODO make sure to tare F/T sensor
-		f_z_meas = force[5]
-		pass
-
-	def forceCtrlZ(self, cmd, tool_pose, force):
-		# TODO limit to force_epsilon so we don't lose contact
-
-		# TODO lookahead
-		f_z_meas = force[5]
-		R = rox.q2R(cmd.q0, cmd.qx, cmd.qy, cmd.qz)
-
-		# TODO make sure this sign makes sense
-		v_z = ( f_z_meas - cmd.fz ) / self.params['force_ctrl_damping']
-		z = cmd.z + v_z * TIMESTEP
-
-		p = [cmd.x, cmd.y, z]
-		return true, rox.Transform(R,p)
-
-
-	def posCtrl(self, cmd):
-		R = rox.q2R(cmd.q0, cmd.qx, cmd.qy, cmd.qz)
-		p = [cmd.x, cmd.y, cmd.z]
-		
-		return true, rox.Transform(R,p)
-
-	def unloadZ(self, tool_pose, force):
-		# TODO need to include a Z height to move to
-		f_z_meas = force[5]
-		pass
+    print(is_done, tool_pose)
+    print((t_1 - t_0)/i / TIMESTEP * 100, '%')
 
 def main():
-	file = "../toolpath_gen/test_force_toolpath.txt"
-	with open(file) as f:
-		lines = f.readlines()
+    import sys
+    sys.path.append('../')
+    from robot_kin import abb_6640_kinematics as kin
+    from rpi_abb_irc5 import rpi_abb_irc5
+    egm = rpi_abb_irc5.EGM()
 
-	tp_ctrl = ToolpathControl()
-	tp_ctrl.load_toolpath(lines)
 
-	for i in range(20):
-		print(tp_ctrl.commands[i])
 
+    input("Careful - robot motion in this script")
+    file = "../toolpath_gen/test_force_toolpath.txt"
+    with open(file) as f:
+        lines = f.readlines()
+
+    tp_ctrl = ToolpathControl()
+    tp_ctrl.load_toolpath(lines)
+
+    tp_ctrl.params = {
+        "force_ctrl_damping": 100.0,
+        "force_epsilon": 10.0,
+        "moveL_speed_lin": 1.0,
+        "moveL_speed_ang": 1.0,
+        "load_speed": 1.0,
+        "unload_speed": 1.0
+        }
+
+    for i in range(20):
+        print(tp_ctrl.commands[i])
+
+    robot_pose = None
+    last_q = None
+    force = np.array([0,0,0,0,0,0])
+
+    while True:
+        res, state = egm.receive_from_robot(.1)
+
+        if res:
+            # Clear queue
+            i = 0
+            while True:
+                res_i, state_i = self.egm.receive_from_robot()
+                if res_i: # there was another msg waiting
+                    state = state_i
+                    i += 1
+                else: # previous msg was end of queue
+                    break
+
+            if robot_pose is None:
+                last_q = state.joint_angles
+                robot_pose = kin.forkin(last_q)
+
+            is_done, robot_pose = tp_ctrl.step(tool_pose, force)
+
+            q_c = kin.invkin(robot_pose.R,robot_pose.p, last_joints = last_q)[0]
+            last_q = q_c
+            self.egm.send_to_robot(q_c)
+
+            if is_done:
+                break
+        else:
+            print("Waiting...")
+
+    print("Done!")
 
 
 if __name__ == '__main__':
-	main()
+    main()
