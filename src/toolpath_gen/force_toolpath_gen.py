@@ -105,7 +105,7 @@ class GenFullToolpath():
 				toolpath += "forceCtrlZ {} {} {} 1 0 0 0\n".format(zig_x[i], roll_y_positions[y_index], zig_f[i])
 
 			# Unloading
-			toolpath += "unloadZ\n"
+			toolpath += "unloadZ {}\n".format(self.params['hover_height'])
 
 			# Check if done
 			if y_index == len(roll_y_positions) - 1:
@@ -132,7 +132,7 @@ class GenFullToolpath():
 				toolpath += "forceCtrlZ {} {} {} 1 0 0 0\n".format(zag_x[i], roll_y_positions[y_index], zag_f[i])
 
 			# Unloading
-			toolpath += "unloadZ\n"
+			toolpath += "unloadZ {}\n".format(self.params['hover_height'])
 
 			# Check if done
 			if y_index == len(roll_y_positions) - 1:
@@ -142,7 +142,7 @@ class GenFullToolpath():
 			y_start = roll_y_positions[y_index]
 			y_index += 1
 			y_end = roll_y_positions[y_index]
-			
+
 			y = y_start
 			while(y + self.params['v_stepover'] * TIMESTEP < y_end):
 				y += self.params['v_stepover'] * TIMESTEP;

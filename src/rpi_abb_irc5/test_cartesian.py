@@ -10,7 +10,7 @@ try:
 	while True:
 		res, state = egm.receive_from_robot(.1)
 		new_time = time.perf_counter()
-		print((new_time - last_time)/0.004 * 100)
+		#print((new_time - last_time)/0.004 * 100)
 		last_time = new_time
 		if res:
 			# Clear queue
@@ -26,11 +26,22 @@ try:
 			if i > 0:
 				print("Number of extra msgs in queue: ", i)
 
-			q_c = np.deg2rad(state.joint_angles)
-			q_c[0] = q_c[0] + 0.01
+			#print(state)
+			#print(state.robot_message.feedBack.cartesian)
+			#print()
+
+			fb = state.robot_message.feedBack.cartesian
+			pos = [fb.pos.x, fb.pos.y, fb.pos.z]
+			quat = [fb.orient.u0, fb.orient.u1, fb.orient.u2, fb.orient.u3]
+
+			pos[2] = pos[2] + 500.0
+			#print(pos, quat)
+			send_res = egm.send_to_robot_cart(pos, quat)
+			#print("send_res:", send_res)
+
+			#q_c = np.deg2rad(state.joint_angles)
 			#q_c = state.joint_angles
-			send_res = egm.send_to_robot(q_c)
-			print("send_res:", send_res)
+			#egm.send_to_robot(q_c)
 			# print(state.joint_angles)
 
 except KeyboardInterrupt:
