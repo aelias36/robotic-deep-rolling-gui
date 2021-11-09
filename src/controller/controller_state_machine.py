@@ -18,6 +18,7 @@ import numpy as np
 from robot_kin import abb_6640_kinematics as kin
 import general_robotics_toolbox as rox
 from controller import toolpath_control
+from PyQt5.QtWidgets import QFileDialog
 
 TIMESTEP = 0.004
 
@@ -52,8 +53,15 @@ class ControllerStateMachine():
         self.gui.wp_os_ry.valueChanged.connect(self.update_wp_os)
         self.gui.wp_os_rz.valueChanged.connect(self.update_wp_os)
 
+        # Loading buttons
+        self.gui.toolpath_load_button.clicked.connect(self.load_toolpath_dialog)
+
         self.local_robot_position = None
         self.last_q = None
+
+    def load_toolpath_dialog(self, val):
+        file_name = QFileDialog.getOpenFileName(self.gui, "Open Toolpath", filter="Toolpath Files (*.txt *.toolpath)")
+        print(file_name)
 
 
     def update_wp_os(self, val):
@@ -261,7 +269,10 @@ class ControllerStateMachine():
         #   operation stops when force control section ends
         # TODO disable sections of GUI when running
 
+
+
         is_done, tool_pose = tp_ctrl.step(tool_pose, force)
+
 
 
 def main():

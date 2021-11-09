@@ -42,6 +42,7 @@ Interface to ABB's EGM
 
 Based on https://github.com/rpiRobotics/rpi_abb_irc5
 
-And ported to python3
+Ported to python3, and added a function for Cartesian robot control
+
 ### `src > toolpath_gen`
 Generate toolpath files for the controller to execute
