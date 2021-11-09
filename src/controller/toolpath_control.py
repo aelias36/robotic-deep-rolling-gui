@@ -242,7 +242,7 @@ def main():
         "moveL_speed_ang": np.deg2rad(10.0),
         "load_speed": 0.001,
         "unload_speed": 0.01,
-        "disable_f_ctrl": False
+        "disable_f_ctrl": True
         }
 
     for i in range(20):
