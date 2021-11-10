@@ -2352,7 +2352,7 @@ color: rgb(0, 255, 0);</string>
      <property name="geometry">
       <rect>
        <x>30</x>
-       <y>120</y>
+       <y>140</y>
        <width>101</width>
        <height>71</height>
       </rect>
@@ -2379,7 +2379,7 @@ color: white</string>
      <property name="geometry">
       <rect>
        <x>140</x>
-       <y>120</y>
+       <y>140</y>
        <width>101</width>
        <height>71</height>
       </rect>
@@ -2406,7 +2406,7 @@ color: white;</string>
      <property name="geometry">
       <rect>
        <x>80</x>
-       <y>200</y>
+       <y>220</y>
        <width>101</width>
        <height>71</height>
       </rect>

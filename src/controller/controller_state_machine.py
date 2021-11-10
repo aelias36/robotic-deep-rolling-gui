@@ -14,6 +14,7 @@ sys.path.append('../')
 import threading
 import time
 import numpy as np
+import yaml
 from robot_kin import abb_6640_kinematics as kin
 import general_robotics_toolbox as rox
 from controller import toolpath_control
@@ -40,52 +41,7 @@ class ControllerStateMachine(QtCore.QObject):
     signal_toolpath_name = QtCore.pyqtSignal(str)
     signal_status_lights = QtCore.pyqtSignal(bool, bool, bool, bool)
 
-    def __init__(self, egm, gui):
-        QtCore.QObject.__init__(self)
-
-        self.egm = egm
-        self.gui = gui
-        self.tp_ctrl = toolpath_control.ToolpathControl()
-        self.tp_ctrl.params = {
-            "force_ctrl_damping": 1.0e4,
-            "force_epsilon": 10.0,
-            "moveL_speed_lin": 0.1,
-            "moveL_speed_ang": np.deg2rad(10.0),
-            "load_speed": 0.001,
-            "unload_speed": 0.01,
-            "disable_f_ctrl": True
-            }
-
-        self.is_running = True
-        self.mode = "manual_jog"
-        self.mode_changed = True
-        self.gui.mode_disp.setText(self.mode)
-
-        work_R = np.eye(3)
-        work_p = np.array([1.5, 0.0, 1.5])
-        self.work_offset = rox.Transform(work_R, work_p)
-        self.display_wp_offset(self.work_offset)
-
-        self.tool_offset = rox.Transform(rox.rot([0.,1.,0.], np.pi),  [0.0, 0.0, 0.0])
-        self.display_tool_offset(self.tool_offset)
-
-        ft_R = np.eye(3)
-        ft_p = np.array([0.0, 0.0, 0.0])
-        self.ft_offset = rox.Transform(ft_R, ft_p)
-        self.display_ft_offset(self.ft_offset)
-
-        self.set_up_gui_buttons()
-
-        self.local_robot_position = None
-        self.tool_position = None
-        self.tool_wp_position = None
-
-        self.toolpath_state = "no_program"
-        self.toolpath_state_changed = False
-        self.egm_okay_changed = False
-        self.prev_egm_okay = None
-
-        
+    def set_up_signals(self):
         self.signal_display_positions.connect(self.display_position)
         self.signal_display_tool_offset.connect(self.display_tool_offset)
         self.signal_display_ft_offset.connect(self.display_ft_offset)
@@ -99,13 +55,71 @@ class ControllerStateMachine(QtCore.QObject):
         self.signal_toolpath_name.connect(self.gui.toolpath_name.setText)
         self.signal_status_lights.connect(self.display_status_lights)
 
+
+    def __init__(self, egm, gui):
+        QtCore.QObject.__init__(self)
+
+        self.egm = egm
+        self.gui = gui
+        self.tp_ctrl = toolpath_control.ToolpathControl()
+
+        self.is_running = True
+        self.mode = "manual_jog"
+        self.mode_changed = True
+        self.gui.mode_disp.setText(self.mode)
+
+        self.work_offset = rox.Transform(np.eye(3), [0.0,0.0,0.0])
+        self.display_wp_offset(self.work_offset)
+
+        self.tool_offset = rox.Transform(np.eye(3), [0.0,0.0,0.0])
+        self.display_tool_offset(self.tool_offset)
+
+        self.ft_offset = rox.Transform(np.eye(3), [0.0,0.0,0.0])
+        self.display_ft_offset(self.ft_offset)
+
+        self.local_robot_position = None
+        self.tool_position = None
+        self.tool_wp_position = None
+
+        self.toolpath_state = "no_program"
+        self.toolpath_state_changed = False
+        self.egm_okay_changed = False
+        self.prev_egm_okay = None
+
+        self.set_up_gui_buttons()
+        self.set_up_signals()
+        
         self.display_DRO = True
         self.DRO_timer = QTimer()
         self.DRO_timer.start(33) # ms
         self.DRO_timer.timeout.connect(self.handle_DRO_timer)
 
-    def handle_DRO_timer(self):
-        self.display_DRO = True
+    ##############################################################################
+    # Start GUI Functions                                                        #
+    ##############################################################################
+    def set_up_gui_buttons(self):
+        # Set up workpiece offset buttons
+        self.gui.wp_os_x.valueChanged.connect(self.update_wp_os)
+        self.gui.wp_os_y.valueChanged.connect(self.update_wp_os)
+        self.gui.wp_os_z.valueChanged.connect(self.update_wp_os)
+        self.gui.wp_os_rx.valueChanged.connect(self.update_wp_os)
+        self.gui.wp_os_ry.valueChanged.connect(self.update_wp_os)
+        self.gui.wp_os_rz.valueChanged.connect(self.update_wp_os)
+
+        # Loading buttons
+        self.gui.toolpath_load_button.clicked.connect(self.load_toolpath_dialog)
+        self.gui.offset_load_button.clicked.connect(self.load_config_dialog)
+
+        # Mode selector
+        self.gui.mode_dial.valueChanged.connect(self.handle_mode_change)
+
+        # Start / Stop / Hold buttons
+        self.start_clicked = False
+        self.stop_clicked = False
+        self.hold_clicked = False
+        self.gui.start_button.clicked.connect(self.handle_start_button)
+        self.gui.stop_button.clicked.connect(self.handle_stop_button)
+        self.gui.hold_button.clicked.connect(self.handle_hold_button)
 
     def display_status_lights(self, egm_connected, rapid_running, motors_on, ft_connected):
         def col(b):
@@ -142,6 +156,13 @@ class ControllerStateMachine(QtCore.QObject):
         self.gui.ft_os_rz.setValue(np.rad2deg(rz))
 
     def display_wp_offset(self, T):
+        self.gui.wp_os_x.blockSignals(True)
+        self.gui.wp_os_y.blockSignals(True)
+        self.gui.wp_os_z.blockSignals(True)
+        self.gui.wp_os_rx.blockSignals(True)
+        self.gui.wp_os_ry.blockSignals(True)
+        self.gui.wp_os_rz.blockSignals(True)
+
         rx, ry, rz = rox.R2rpy(T.R)
         self.gui.wp_os_x.setValue(T.p[0])
         self.gui.wp_os_y.setValue(T.p[1])
@@ -150,35 +171,17 @@ class ControllerStateMachine(QtCore.QObject):
         self.gui.wp_os_ry.setValue(np.rad2deg(ry))
         self.gui.wp_os_rz.setValue(np.rad2deg(rz))
 
-    def set_up_gui_buttons(self):
-        # Set up workpiece offset buttons
-        self.gui.wp_os_x.valueChanged.connect(self.update_wp_os)
-        self.gui.wp_os_y.valueChanged.connect(self.update_wp_os)
-        self.gui.wp_os_z.valueChanged.connect(self.update_wp_os)
-        self.gui.wp_os_rx.valueChanged.connect(self.update_wp_os)
-        self.gui.wp_os_ry.valueChanged.connect(self.update_wp_os)
-        self.gui.wp_os_rz.valueChanged.connect(self.update_wp_os)
+        self.gui.wp_os_x.blockSignals(False)
+        self.gui.wp_os_y.blockSignals(False)
+        self.gui.wp_os_z.blockSignals(False)
+        self.gui.wp_os_rx.blockSignals(False)
+        self.gui.wp_os_ry.blockSignals(False)
+        self.gui.wp_os_rz.blockSignals(False)
 
-        # Loading buttons
-        self.gui.toolpath_load_button.clicked.connect(self.load_toolpath_dialog)
-
-        # Mode selector
-        self.gui.mode_dial.valueChanged.connect(self.handle_mode_change)
-
-        # Start / Stop / Hold buttons
-        self.start_clicked = False
-        self.stop_clicked = False
-        self.hold_clicked = False
-        self.gui.start_button.clicked.connect(self.handle_start_button)
-        self.gui.stop_button.clicked.connect(self.handle_stop_button)
-        self.gui.hold_button.clicked.connect(self.handle_hold_button)
-
-    def handle_start_button(self):
-        self.start_clicked = True
-    def handle_stop_button(self):
-        self.stop_clicked = True
-    def handle_hold_button(self):
-        self.hold_clicked = True
+    def handle_DRO_timer(self): self.display_DRO = True
+    def handle_start_button(self): self.start_clicked = True
+    def handle_stop_button(self): self.stop_clicked = True
+    def handle_hold_button(self): self.hold_clicked = True
 
     def handle_mode_change(self, mode_value):
         if mode_value == 0:
@@ -192,24 +195,31 @@ class ControllerStateMachine(QtCore.QObject):
 
         self.mode_changed = True
 
-
     def load_toolpath_dialog(self, val):
         file_name = QFileDialog.getOpenFileName(self.gui, "Open Toolpath", filter="Toolpath Files (*.txt *.toolpath)")[0]
         print(file_name)
+        if file_name == '':
+            return
+
+        with open(file_name) as f:
+            lines = f.readlines()
+        self.tp_ctrl.load_toolpath(lines)
+
+        self.signal_toolpath_name.emit(file_name)
+
+        self.toolpath_state = "standby"
+        self.toolpath_state_changed = True
+
+        self.gui.total_cmds.setText(str(len(self.tp_ctrl.commands)))
+        self.signal_current_cmd_number.emit(str(self.tp_ctrl.program_counter+1))
+        self.signal_progress_bar.emit(round((self.tp_ctrl.program_counter+1) / len(self.tp_ctrl.commands) * 100.0))
+        self.signal_current_cmd_text.emit(str(self.tp_ctrl.commands[self.tp_ctrl.program_counter]))
+
+    def load_config_dialog(self, val):
+        file_name = QFileDialog.getOpenFileName(self.gui, "Open Configuration File", filter="Configuration Files (*.yaml)")[0]
+        print(file_name)
         if file_name != '':
-            with open(file_name) as f:
-                lines = f.readlines()
-            self.tp_ctrl.load_toolpath(lines)
-
-            self.signal_toolpath_name.emit(file_name)
-
-            self.toolpath_state = "standby"
-            self.toolpath_state_changed = True
-
-            self.gui.total_cmds.setText(str(len(self.tp_ctrl.commands)))
-            self.signal_current_cmd_number.emit(str(self.tp_ctrl.program_counter+1))
-            self.signal_progress_bar.emit(round((self.tp_ctrl.program_counter+1) / len(self.tp_ctrl.commands) * 100.0))
-            self.signal_current_cmd_text.emit(str(self.tp_ctrl.commands[self.tp_ctrl.program_counter]))
+            self.load_config_file(file_name)
 
     def update_wp_os(self, val):
         rx = np.deg2rad(self.gui.wp_os_rx.value())
@@ -222,6 +232,29 @@ class ControllerStateMachine(QtCore.QObject):
         self.work_offset.p[1] = self.gui.wp_os_y.value()
         self.work_offset.p[2] = self.gui.wp_os_z.value()
 
+    def display_position(self, tool_position, tool_wp_position):
+        self.gui.world_x.display(tool_position.p[0])
+        self.gui.world_y.display(tool_position.p[1])
+        self.gui.world_z.display(tool_position.p[2])
+
+        rx, ry, rz = rox.R2rpy(tool_position.R)
+        self.gui.world_rx.display(np.rad2deg(rx))
+        self.gui.world_ry.display(np.rad2deg(ry))
+        self.gui.world_rz.display(np.rad2deg(rz))
+
+        self.gui.wp_x.display(tool_wp_position.p[0])
+        self.gui.wp_y.display(tool_wp_position.p[1])
+        self.gui.wp_z.display(tool_wp_position.p[2])
+
+        rx, ry, rz = rox.R2rpy(tool_wp_position.R)
+        self.gui.wp_rx.display(np.rad2deg(rx))
+        self.gui.wp_ry.display(np.rad2deg(ry))
+        self.gui.wp_rz.display(np.rad2deg(rz))
+
+    ##############################################################################
+    # End GUI Functions                                                          #
+    ##############################################################################
+
     def start_loop(self):
         self.thread = threading.Thread(target = self.state_machine_loop)
         self.thread.start()
@@ -232,11 +265,41 @@ class ControllerStateMachine(QtCore.QObject):
 
     def state_machine_loop(self):
         while self.is_running:
-            try:
-                self.step()
-            except Exception as e:
-                print(e)
-                raise
+            self.step()
+
+    def load_config_file(self, filename):
+        with open(filename, 'r') as file:
+            config = yaml.safe_load(file)
+
+        if "toolpath_control_params" in config:
+            self.tp_ctrl.params = config["toolpath_control_params"]
+            print("Loaded toolpath control parameters:")
+            print(self.tp_ctrl.params)
+
+        if "work_offset" in config:
+            p = config["work_offset"]["pos"]
+            print("p:", p)
+            R = rox.rpy2R(np.deg2rad(config["work_offset"]["euler_deg"]))
+            self.work_offset = rox.Transform(R,p)
+            self.signal_display_wp_offset.emit(self.work_offset)
+            print("Loaded work offset:")
+            print(self.work_offset)
+
+        if "tool_offset" in config:
+            p = config["tool_offset"]["pos"]
+            R = rox.rpy2R(np.deg2rad(config["tool_offset"]["euler_deg"]))
+            self.tool_offset = rox.Transform(R,p)
+            self.signal_display_tool_offset.emit(self.tool_offset)
+            print("Loaded tool offset:")
+            print(self.tool_offset)
+
+        if "ft_offset" in config:
+            p = config["ft_offset"]["pos"]
+            R = rox.rpy2R(np.deg2rad(config["ft_offset"]["euler_deg"]))
+            self.ft_offset = rox.Transform(R,p)
+            self.signal_display_ft_offset.emit(self.ft_offset)
+            print("Loaded force/torque offset:")
+            print(self.ft_offset)
 
     def step(self):
         self.egm_connected, self.egm_state = self.egm.receive_from_robot(.1)
@@ -311,25 +374,6 @@ class ControllerStateMachine(QtCore.QObject):
             t_1 = time.perf_counter()
             send_res = self.egm.send_to_robot_cart(pos, quat)
 
-    def display_position(self, tool_position, tool_wp_position):
-        self.gui.world_x.display(tool_position.p[0])
-        self.gui.world_y.display(tool_position.p[1])
-        self.gui.world_z.display(tool_position.p[2])
-
-        rx, ry, rz = rox.R2rpy(tool_position.R)
-        self.gui.world_rx.display(np.rad2deg(rx))
-        self.gui.world_ry.display(np.rad2deg(ry))
-        self.gui.world_rz.display(np.rad2deg(rz))
-
-        self.gui.wp_x.display(tool_wp_position.p[0])
-        self.gui.wp_y.display(tool_wp_position.p[1])
-        self.gui.wp_z.display(tool_wp_position.p[2])
-
-        rx, ry, rz = rox.R2rpy(tool_wp_position.R)
-        self.gui.wp_rx.display(np.rad2deg(rx))
-        self.gui.wp_ry.display(np.rad2deg(ry))
-        self.gui.wp_rz.display(np.rad2deg(rz))
-
     def mode_manual_jog(self):
         if self.egm_okay_changed:
             if self.egm_okay:
@@ -349,17 +393,17 @@ class ControllerStateMachine(QtCore.QObject):
 
         # Linear
         if self.gui.plus_x.isDown():
-            v_des = [1, 0.0, 0.0]
+            v_des = [1.0, 0.0, 0.0]
         elif self.gui.minus_x.isDown():
             v_des = [-1, 0.0, 0.0]
         elif self.gui.plus_y.isDown():
-            v_des = [0.0, 1, 0.0]
+            v_des = [0.0, 1.0, 0.0]
         elif self.gui.minus_y.isDown():
-            v_des = [0.0, -1, 0.0]
+            v_des = [0.0, -1.0, 0.0]
         elif self.gui.plus_z.isDown():
-            v_des = [0.0, 0.0, 1]
+            v_des = [0.0, 0.0, 1.0]
         elif self.gui.minus_z.isDown(): 
-            v_des = [0.0, 0.0, -1]
+            v_des = [0.0, 0.0, -1.0]
         # Angular
         elif self.gui.plus_rx.isDown():
             v_rot_des = [1.0, 0.0, 0.0]
@@ -406,7 +450,6 @@ class ControllerStateMachine(QtCore.QObject):
             self.local_robot_position = self.tool_position * self.tool_offset.inv()
         
         #print((t_1 - t_0) / TIMESTEP * 100, '%')
-        
 
     def mode_toolpath(self, simulate_force = False, zero_force = False):
         if self.toolpath_state == "no_program":
