@@ -29,14 +29,14 @@ class SphKin(object):
         self.joint_upper_limit = np.deg2rad(np.array([170,85,70,300,200,360*96]))
   
     # define method
-    def fwd(self, q):
+    def forkin(self, q):
         qnp = np.array(q)
         qc = qnp.ctypes.data_as(POINTER(c_double))
         flat_T = lib.fwdkin(self.obj,qc)
         T = np.ctypeslib.as_array(flat_T, shape=(16,))
         T = np.reshape(T,(4,4)).T
         return rox.Transform(T[0:3,0:3],T[0:3,3])
-    def inv(self, R, p, last_joints=None):
+    def invkin(self, R, p, last_joints=None):
         TRP = np.vstack((R,np.array([0,0,0]))).T
         flat_T = np.reshape(TRP,(12,))
         flat_T = np.append(flat_T, p)
@@ -64,25 +64,17 @@ class SphKin(object):
 
 def test_func():
 
-    obj = SphKin()
+    abb = SphKin()
     q1,q2,q3,q4,q5,q6 = math.pi/2,-math.pi/2+0.2,math.pi/10,math.pi/10,math.pi/8,math.pi/10
+
     print("Initial q")
-    q = np.array([q1, q2, q3, q4, q5, q6])
-    print(q)
-    a = obj.fwd(q)
-    print("FwdKin")
-    print(a)
+    print(np.array([q1, q2, q3, q4, q5, q6]))
+    T = abb.forkin(np.array([q1, q2, q3, q4, q5, q6]))
+    print("Robot T:")
+    print(T)
 
-    print("InvKin")
-    #qsol = obj.inv(a[0:3,0:3],a[0:3,3],[ 1.5707,0.42828,-3.,0.130,1.9,0.659])
-    qsol = obj.inv(a.R,a.p)
-    print(qsol)
-    a = obj.fwd(qsol[0])
-    print("FwdKin")
-    print(a)
-    print("test end")
-
-    time_dur = np.array([])
+    time_dur_fk = np.array([])
+    time_dur_ik = np.array([])
     for i in range(1000):
         q1 = np.deg2rad(rand()*340-170)
         q2 = np.deg2rad(rand()*150-65)
@@ -91,14 +83,20 @@ def test_func():
         q5 = np.deg2rad(rand()*240-120)
         q6 = np.deg2rad(rand()*720-360)
         q = np.array([q1, q2, q3, q4, q5, q6])
-        a = obj.fwd(q)
         st = time.perf_counter_ns()
-        qsol = obj.inv(a.R,a.p)
+        a = abb.forkin(q)
         et = time.perf_counter_ns()
-        time_dur = np.append(time_dur, float(et-st)/1e6)
-    print("Mean Time Elapsed:",np.mean(time_dur))
-    print("Max Time Elapsed:",np.max(time_dur))
-    print("Min Time Elapsed:",np.min(time_dur))
+        time_dur_fk = np.append(time_dur_fk, float(et-st)/1e6)
+        st = time.perf_counter_ns()
+        qsol = abb.invkin(a.R,a.p)
+        et = time.perf_counter_ns()
+        time_dur_ik = np.append(time_dur_ik, float(et-st)/1e6)
+    print("FK Mean Time Elapsed:",np.mean(time_dur_fk))
+    print("FK Max Time Elapsed:",np.max(time_dur_fk))
+    print("FK Min Time Elapsed:",np.min(time_dur_fk))
+    print("IK Mean Time Elapsed:",np.mean(time_dur_ik))
+    print("IK Max Time Elapsed:",np.max(time_dur_ik))
+    print("IK Min Time Elapsed:",np.min(time_dur_ik))
 
 if __name__ == '__main__':
     test_func()
