@@ -31,6 +31,7 @@ class ToolpathControl():
     def __init__(self):
         self.commands = []
         self.program_counter = 0
+        self.params = None
 
         self.CmdMoveL = namedtuple("CmdMoveL", "x y z q0 qx qy qz")
         self.CmdLoadZ = namedtuple("CmdLoadZ", "")
