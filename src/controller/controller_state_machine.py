@@ -19,6 +19,7 @@ import general_robotics_toolbox as rox
 from controller import toolpath_control
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5 import QtCore
+from PyQt5.QtCore import QTimer
 
 TIMESTEP = 0.004
 
@@ -27,17 +28,22 @@ class ControllerStateMachine(QtCore.QObject):
     # Signals and slots must be used to ensure thread safety
     # Any GUI access needs to be done on the main thread
     signal_display_positions = QtCore.pyqtSignal(rox.Transform, rox.Transform)
+    signal_display_tool_offset = QtCore.pyqtSignal(rox.Transform)
+    signal_display_ft_offset = QtCore.pyqtSignal(rox.Transform)
+    signal_display_wp_offset = QtCore.pyqtSignal(rox.Transform)
     signal_mode = QtCore.pyqtSignal(str)
     signal_status = QtCore.pyqtSignal(str, str)
     signal_mode_select_enable = QtCore.pyqtSignal(bool)
     signal_current_cmd_number = QtCore.pyqtSignal(str)
     signal_progress_bar = QtCore.pyqtSignal(int)
+    signal_current_cmd_text = QtCore.pyqtSignal(str)
+    signal_toolpath_name = QtCore.pyqtSignal(str)
+    signal_status_lights = QtCore.pyqtSignal(bool, bool, bool, bool)
 
     def __init__(self, egm, gui):
         QtCore.QObject.__init__(self)
 
         self.egm = egm
-        self.prev_egm_connected = None
         self.gui = gui
         self.tp_ctrl = toolpath_control.ToolpathControl()
         self.tp_ctrl.params = {
@@ -56,14 +62,17 @@ class ControllerStateMachine(QtCore.QObject):
         self.gui.mode_disp.setText(self.mode)
 
         work_R = np.eye(3)
-        work_p = np.array([0.0, 0.0, 0.0])
+        work_p = np.array([1.5, 0.0, 1.5])
         self.work_offset = rox.Transform(work_R, work_p)
+        self.display_wp_offset(self.work_offset)
 
         self.tool_offset = rox.Transform(rox.rot([0.,1.,0.], np.pi),  [0.0, 0.0, 0.0])
+        self.display_tool_offset(self.tool_offset)
 
         ft_R = np.eye(3)
         ft_p = np.array([0.0, 0.0, 0.0])
         self.ft_offset = rox.Transform(ft_R, ft_p)
+        self.display_ft_offset(self.ft_offset)
 
         self.set_up_gui_buttons()
 
@@ -73,20 +82,73 @@ class ControllerStateMachine(QtCore.QObject):
 
         self.toolpath_state = "no_program"
         self.toolpath_state_changed = False
-        self.egm_state_changed = False
+        self.egm_okay_changed = False
+        self.prev_egm_okay = None
 
         
         self.signal_display_positions.connect(self.display_position)
+        self.signal_display_tool_offset.connect(self.display_tool_offset)
+        self.signal_display_ft_offset.connect(self.display_ft_offset)
+        self.signal_display_wp_offset.connect(self.display_wp_offset)
         self.signal_mode.connect(self.gui.mode_disp.setText)
         self.signal_status.connect(self.display_status)
         self.signal_mode_select_enable.connect(self.gui.mode_dial.setEnabled)
         self.signal_current_cmd_number.connect(self.gui.current_cmd_number.setText)
         self.signal_progress_bar.connect(self.gui.progress_bar.setValue)
+        self.signal_current_cmd_text.connect(self.gui.current_cmd_text.setPlainText)
+        self.signal_toolpath_name.connect(self.gui.toolpath_name.setText)
+        self.signal_status_lights.connect(self.display_status_lights)
+
+        self.display_DRO = True
+        self.DRO_timer = QTimer()
+        self.DRO_timer.start(33) # ms
+        self.DRO_timer.timeout.connect(self.handle_DRO_timer)
+
+    def handle_DRO_timer(self):
+        self.display_DRO = True
+
+    def display_status_lights(self, egm_connected, rapid_running, motors_on, ft_connected):
+        def col(b):
+            if b:
+                return "background-color: green"
+            else:
+                return "background-color: red"
+
+        self.gui.egm_connected.setStyleSheet(col(egm_connected))
+        self.gui.rapid_running.setStyleSheet(col(rapid_running))
+        self.gui.motors_on.setStyleSheet(col(motors_on))
+        self.gui.ft_connected.setStyleSheet(col(ft_connected))
 
     def display_status(self, status_str, color):
         self.gui.status_disp.setText(status_str)
         self.gui.status_disp.setStyleSheet("QLineEdit {background-color: " + color + ";}")
 
+    def display_tool_offset(self, T):
+        rx, ry, rz = rox.R2rpy(T.R)
+        self.gui.tool_os_x.setValue(T.p[0])
+        self.gui.tool_os_y.setValue(T.p[1])
+        self.gui.tool_os_z.setValue(T.p[2])
+        self.gui.tool_os_rx.setValue(np.rad2deg(rx))
+        self.gui.tool_os_ry.setValue(np.rad2deg(ry))
+        self.gui.tool_os_rz.setValue(np.rad2deg(rz))
+
+    def display_ft_offset(self, T):
+        rx, ry, rz = rox.R2rpy(T.R)
+        self.gui.ft_os_x.setValue(T.p[0])
+        self.gui.ft_os_y.setValue(T.p[1])
+        self.gui.ft_os_z.setValue(T.p[2])
+        self.gui.ft_os_rx.setValue(np.rad2deg(rx))
+        self.gui.ft_os_ry.setValue(np.rad2deg(ry))
+        self.gui.ft_os_rz.setValue(np.rad2deg(rz))
+
+    def display_wp_offset(self, T):
+        rx, ry, rz = rox.R2rpy(T.R)
+        self.gui.wp_os_x.setValue(T.p[0])
+        self.gui.wp_os_y.setValue(T.p[1])
+        self.gui.wp_os_z.setValue(T.p[2])
+        self.gui.wp_os_rx.setValue(np.rad2deg(rx))
+        self.gui.wp_os_ry.setValue(np.rad2deg(ry))
+        self.gui.wp_os_rz.setValue(np.rad2deg(rz))
 
     def set_up_gui_buttons(self):
         # Set up workpiece offset buttons
@@ -139,8 +201,15 @@ class ControllerStateMachine(QtCore.QObject):
                 lines = f.readlines()
             self.tp_ctrl.load_toolpath(lines)
 
+            self.signal_toolpath_name.emit(file_name)
+
             self.toolpath_state = "standby"
             self.toolpath_state_changed = True
+
+            self.gui.total_cmds.setText(str(len(self.tp_ctrl.commands)))
+            self.signal_current_cmd_number.emit(str(self.tp_ctrl.program_counter+1))
+            self.signal_progress_bar.emit(round((self.tp_ctrl.program_counter+1) / len(self.tp_ctrl.commands) * 100.0))
+            self.signal_current_cmd_text.emit(str(self.tp_ctrl.commands[self.tp_ctrl.program_counter]))
 
     def update_wp_os(self, val):
         rx = np.deg2rad(self.gui.wp_os_rx.value())
@@ -181,30 +250,44 @@ class ControllerStateMachine(QtCore.QObject):
                     i += 1
                 else: # previous msg was end of queue
                     break
+            if i > 0:
+                print("Warning: Extra msgs in queue: ", i)
         
             fb = self.egm_state.robot_message.feedBack.cartesian
+
             pos = np.array([fb.pos.x, fb.pos.y, fb.pos.z])/1000.0 # mm -> m
             quat = [fb.orient.u0, fb.orient.u1, fb.orient.u2, fb.orient.u3]
             robot_pos_measured = rox.Transform(rox.q2R(quat), pos)
-            if self.local_robot_position is None:
-                self.local_robot_position = robot_pos_measured
 
+            tool_position_measured = robot_pos_measured * self.tool_offset
+            tool_wp_position_measured = self.work_offset.inv() * tool_position_measured
+
+            if self.display_DRO:
+                self.display_position(tool_position_measured, tool_wp_position_measured)
+                self.display_DRO = False
             
+
+        self.egm_okay = self.egm_connected and self.egm_state.rapid_running and self.egm_state.motors_on
+        self.egm_okay_changed = self.egm_okay != self.prev_egm_okay
+        self.prev_egm_okay = self.egm_okay
+
+        if self.egm_okay_changed:
+            if self.egm_connected:
+                self.signal_status_lights.emit(self.egm_connected, self.egm_state.rapid_running, self.egm_state.motors_on, False)
+            else:
+                self.signal_status_lights.emit(self.egm_connected, False, False, False)
+
+        if self.egm_okay_changed and self.egm_okay:
+            self.local_robot_position = robot_pos_measured
+
+        if self.egm_okay:
             self.tool_position = self.local_robot_position * self.tool_offset
             self.tool_wp_position = self.work_offset.inv() * self.tool_position
-
-            self.display_position(self.tool_position, self.tool_wp_position)
-
-            if i > 0:
-                print("Warning: Extra msgs in queue: ", i)
-
-        if self.prev_egm_connected != self.egm_connected:
-            self.egm_state_changed = True
-        self.prev_egm_connected = self.egm_connected
 
         if self.mode_changed:
             self.signal_mode.emit(self.mode)
             self.toolpath_state_changed = True
+            self.egm_okay_changed = True
             self.mode_changed = False
 
         if self.mode == "manual_jog":
@@ -222,8 +305,6 @@ class ControllerStateMachine(QtCore.QObject):
         else:
             raise ValueError("Wrong state: " + str(self.state))
 
-
-
         if self.local_robot_position is not None:
             pos = self.local_robot_position.p * 1000.0 # m -> mm
             quat = rox.R2q(self.local_robot_position.R)
@@ -235,33 +316,28 @@ class ControllerStateMachine(QtCore.QObject):
         self.gui.world_y.display(tool_position.p[1])
         self.gui.world_z.display(tool_position.p[2])
 
-        k, theta = rox.R2rot(tool_position.R)
-        self.gui.world_r.display(np.rad2deg(theta))
-        self.gui.world_rx.display(k[0])
-        self.gui.world_ry.display(k[1])
-        self.gui.world_rz.display(k[2])
+        rx, ry, rz = rox.R2rpy(tool_position.R)
+        self.gui.world_rx.display(np.rad2deg(rx))
+        self.gui.world_ry.display(np.rad2deg(ry))
+        self.gui.world_rz.display(np.rad2deg(rz))
 
         self.gui.wp_x.display(tool_wp_position.p[0])
         self.gui.wp_y.display(tool_wp_position.p[1])
         self.gui.wp_z.display(tool_wp_position.p[2])
 
-        k, theta = rox.R2rot(tool_wp_position.R)
-        self.gui.wp_r.display(np.rad2deg(theta))
-        self.gui.wp_rx.display(k[0])
-        self.gui.wp_ry.display(k[1])
-        self.gui.wp_rz.display(k[2])
-
+        rx, ry, rz = rox.R2rpy(tool_wp_position.R)
+        self.gui.wp_rx.display(np.rad2deg(rx))
+        self.gui.wp_ry.display(np.rad2deg(ry))
+        self.gui.wp_rz.display(np.rad2deg(rz))
 
     def mode_manual_jog(self):
-        if self.egm_state_changed or self.mode_changed:
-            self.egm_state_changed = False
-            self.mode_changed = False
-            if self.egm_connected:
-                self.signal_status.emit("connected", "")
+        if self.egm_okay_changed:
+            if self.egm_okay:
+                self.signal_status.emit("Running", "")
             else:
-                self.signal_status.emit("disconnected", "red")
+                self.signal_status.emit("EGM not ready", "red")
                 
-        if not self.egm_connected:
+        if not self.egm_okay:
             return
 
         # Calcualate desired velocity
@@ -343,13 +419,13 @@ class ControllerStateMachine(QtCore.QObject):
                 self.toolpath_state_changed = False
                 self.signal_status.emit("Standby", "")
                 self.start_clicked = False
-                self.gui.total_cmds.setText(str(len(self.tp_ctrl.commands)))
                 self.gui.mode_dial.setEnabled(True)
                 
             if self.start_clicked:
                 self.start_clicked = False
-                self.toolpath_state = "running"
-                self.toolpath_state_changed = True
+                if self.egm_okay:
+                    self.toolpath_state = "running"
+                    self.toolpath_state_changed = True
         ##############################################################################
         elif self.toolpath_state == "running":
             if self.toolpath_state_changed:
@@ -359,7 +435,7 @@ class ControllerStateMachine(QtCore.QObject):
                 self.stop_clicked = False
                 self.hold_clicked = False
 
-            if self.stop_clicked:
+            if self.stop_clicked or not self.egm_okay:
                 self.stop_clicked = False
                 self.toolpath_state = "standby"
                 self.toolpath_state_changed = True
@@ -369,26 +445,37 @@ class ControllerStateMachine(QtCore.QObject):
                 self.toolpath_state = "hold_requested"
                 self.toolpath_state_changed = True
 
-            force = [0.,0.,0.,0.,0.,0.] # TODO
-            is_done, self.tool_wp_position = self.tp_ctrl.step(self.tool_wp_position, force)
-            self.tool_position = self.work_offset * self.tool_wp_position
-            self.local_robot_position = self.tool_position * self.tool_offset.inv()
-
-            self.signal_current_cmd_number.emit(str(self.tp_ctrl.program_counter+1))
-            self.signal_progress_bar.emit(round((self.tp_ctrl.program_counter+1) / len(self.tp_ctrl.commands) * 100.0))
+            self.run_toopath()
         ##############################################################################  
         elif self.toolpath_state == "hold_requested":
             if self.toolpath_state_changed:
                 self.toolpath_state_changed = False
                 self.signal_status.emit("Hold Requested", "yellow")
 
-            if self.stop_clicked:
+            if self.stop_clicked or not self.egm_okay:
                 self.stop_clicked = False
+                self.toolpath_state = "standby"
+                self.toolpath_state_changed = True
+
+            self.run_toopath()
+            current_cmd = self.tp_ctrl.commands[self.tp_ctrl.program_counter]
+            if type(current_cmd) is self.tp_ctrl.CmdMoveL or  type(current_cmd) is self.tp_ctrl.CmdPosCtrl:
                 self.toolpath_state = "standby"
                 self.toolpath_state_changed = True
         ############################################################################## 
         else:
             raise ValueError("Wrong value for toolpath_state: ", str(self.toolpath_state))
+
+    def run_toopath(self):
+        force = [0.,0.,0.,0.,0.,0.] # TODO
+        is_done, self.tool_wp_position = self.tp_ctrl.step(self.tool_wp_position, force)
+        self.tool_position = self.work_offset * self.tool_wp_position
+        self.local_robot_position = self.tool_position * self.tool_offset.inv()
+
+        self.signal_current_cmd_number.emit(str(self.tp_ctrl.program_counter+1))
+        self.signal_progress_bar.emit(round((self.tp_ctrl.program_counter+1) / len(self.tp_ctrl.commands) * 100.0))
+        self.signal_current_cmd_text.emit(str(self.tp_ctrl.commands[self.tp_ctrl.program_counter]))
+
 
 def main():
     import sys
@@ -396,7 +483,7 @@ def main():
     from rpi_abb_irc5 import rpi_abb_irc5
     from gui import rolling_gui
     from PyQt5.QtWidgets import QApplication
-    from PyQt5.QtCore import QTimer
+    
 
     egm = rpi_abb_irc5.EGM()
     
