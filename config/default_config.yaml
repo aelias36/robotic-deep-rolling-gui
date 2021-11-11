@@ -3,9 +3,8 @@ toolpath_control_params:
     force_epsilon: 10.0 # N
     moveL_speed_lin: 0.1 # m/s
     moveL_speed_ang: 0.1745 # rad/s # 10.0 deg/sec
-    load_speed: 0.001 # m/s
+    load_speed: 0.01 # m/s
     unload_speed: 0.01 # m/s
-    disable_f_ctrl: True
 
 
 work_offset:

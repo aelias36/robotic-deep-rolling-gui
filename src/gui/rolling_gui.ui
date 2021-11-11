@@ -1442,7 +1442,7 @@ color: rgb(0, 255, 0);</string>
       <double>0.000000000000000</double>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_21">
+    <widget class="QLCDNumber" name="wp_fx">
      <property name="geometry">
       <rect>
        <x>330</x>
@@ -1549,7 +1549,7 @@ color: rgb(0, 255, 0);</string>
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_22">
+    <widget class="QLCDNumber" name="wp_fy">
      <property name="geometry">
       <rect>
        <x>330</x>
@@ -1633,7 +1633,7 @@ color: rgb(0, 255, 0);</string>
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_23">
+    <widget class="QLCDNumber" name="wp_fz">
      <property name="geometry">
       <rect>
        <x>330</x>
@@ -1717,7 +1717,7 @@ color: rgb(0, 255, 0);</string>
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_24">
+    <widget class="QLCDNumber" name="wp_tx">
      <property name="geometry">
       <rect>
        <x>330</x>
@@ -1801,7 +1801,7 @@ color: rgb(0, 255, 0);</string>
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_25">
+    <widget class="QLCDNumber" name="wp_ty">
      <property name="geometry">
       <rect>
        <x>330</x>
@@ -1885,7 +1885,7 @@ color: rgb(0, 255, 0);</string>
       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
      </property>
     </widget>
-    <widget class="QLCDNumber" name="lcdNumber_26">
+    <widget class="QLCDNumber" name="wp_tz">
      <property name="geometry">
       <rect>
        <x>330</x>
@@ -3082,7 +3082,7 @@ color: white;</string>
     <property name="tabBarAutoHide">
      <bool>false</bool>
     </property>
-    <widget class="QWidget" name="tab">
+    <widget class="QWidget" name="wp_tab">
      <property name="enabled">
       <bool>true</bool>
      </property>
@@ -5088,7 +5088,7 @@ color: white;</string>
     <property name="frameShadow">
      <enum>QFrame::Sunken</enum>
     </property>
-    <widget class="QPushButton" name="offset_load_button">
+    <widget class="QPushButton" name="load_config_button">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -5104,7 +5104,7 @@ color: white;</string>
       <bool>false</bool>
      </property>
     </widget>
-    <widget class="QPushButton" name="toolpath_load_button">
+    <widget class="QPushButton" name="load_toolpath_button">
      <property name="geometry">
       <rect>
        <x>20</x>
@@ -5142,7 +5142,7 @@ color: white;</string>
   <tabstop>start_button</tabstop>
   <tabstop>stop_button</tabstop>
   <tabstop>hold_button</tabstop>
-  <tabstop>offset_load_button</tabstop>
+  <tabstop>load_config_button</tabstop>
   <tabstop>mode_dial</tabstop>
   <tabstop>plus_x</tabstop>
   <tabstop>minus_x</tabstop>
@@ -5165,7 +5165,7 @@ color: white;</string>
   <tabstop>mode_disp</tabstop>
   <tabstop>current_cmd_text</tabstop>
   <tabstop>current_cmd_number</tabstop>
-  <tabstop>toolpath_load_button</tabstop>
+  <tabstop>load_toolpath_button</tabstop>
   <tabstop>tool_os_z</tabstop>
   <tabstop>tool_os_rx</tabstop>
   <tabstop>tool_os_x</tabstop>

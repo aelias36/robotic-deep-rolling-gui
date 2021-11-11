@@ -20,6 +20,7 @@ import dataclasses
 from robot_kin import abb_6640_kinematics as kin
 import general_robotics_toolbox as rox
 from controller import toolpath_control
+from ft_simulation import ft_simulation
 
 from PyQt5.QtWidgets import QFileDialog
 from PyQt5 import QtCore
@@ -70,12 +71,13 @@ class ControllerStateMachine(QtCore.QObject):
     signal_display_wp_offset = QtCore.pyqtSignal(rox.Transform)
     signal_mode = QtCore.pyqtSignal(str)
     signal_status = QtCore.pyqtSignal(str, str)
-    signal_mode_select_enable = QtCore.pyqtSignal(bool)
+    signal_gui_lockout_section_enable = QtCore.pyqtSignal(bool)
     signal_current_cmd_number = QtCore.pyqtSignal(str)
     signal_progress_bar = QtCore.pyqtSignal(int)
     signal_current_cmd_text = QtCore.pyqtSignal(str)
     signal_toolpath_name = QtCore.pyqtSignal(str)
     signal_status_lights = QtCore.pyqtSignal(SafetyStatus)
+    signal_display_ft = QtCore.pyqtSignal(list, list)
 
     def set_up_signals(self):
         self.signal_display_positions.connect(self.display_position)
@@ -84,12 +86,13 @@ class ControllerStateMachine(QtCore.QObject):
         self.signal_display_wp_offset.connect(self.display_wp_offset)
         self.signal_mode.connect(self.gui.mode_disp.setText)
         self.signal_status.connect(self.display_status)
-        self.signal_mode_select_enable.connect(self.gui.mode_dial.setEnabled)
+        self.signal_gui_lockout_section_enable.connect(self.gui_lockout_section_enable)
         self.signal_current_cmd_number.connect(self.gui.current_cmd_number.setText)
         self.signal_progress_bar.connect(self.gui.progress_bar.setValue)
         self.signal_current_cmd_text.connect(self.gui.current_cmd_text.setPlainText)
         self.signal_toolpath_name.connect(self.gui.toolpath_name.setText)
         self.signal_status_lights.connect(self.display_status_lights)
+        self.signal_display_ft.connect(self.display_ft)
 
 
     def __init__(self, egm, gui):
@@ -98,6 +101,9 @@ class ControllerStateMachine(QtCore.QObject):
         self.safety_status = SafetyStatus()
         self.prev_safety_status = SafetyStatus()
         self.last_displayed_safety_status = None
+
+        k = 1.0e5
+        self.force_sim = ft_simulation.FTSim([0,0,-k])
 
         self.egm = egm
         self.gui = gui
@@ -145,8 +151,8 @@ class ControllerStateMachine(QtCore.QObject):
         self.gui.wp_os_rz.valueChanged.connect(self.update_wp_os)
 
         # Loading buttons
-        self.gui.toolpath_load_button.clicked.connect(self.load_toolpath_dialog)
-        self.gui.offset_load_button.clicked.connect(self.load_config_dialog)
+        self.gui.load_toolpath_button.clicked.connect(self.load_toolpath_dialog)
+        self.gui.load_config_button.clicked.connect(self.load_config_dialog)
 
         # Mode selector
         self.gui.mode_dial.valueChanged.connect(self.handle_mode_change)
@@ -158,6 +164,28 @@ class ControllerStateMachine(QtCore.QObject):
         self.gui.start_button.clicked.connect(self.handle_start_button)
         self.gui.stop_button.clicked.connect(self.handle_stop_button)
         self.gui.hold_button.clicked.connect(self.handle_hold_button)
+
+    def display_ft(self, world_ft, wp_ft):
+        self.gui.world_fx.display(world_ft[3])
+        self.gui.world_fy.display(world_ft[4])
+        self.gui.world_fz.display(world_ft[5])
+        self.gui.world_tx.display(world_ft[0])
+        self.gui.world_ty.display(world_ft[1])
+        self.gui.world_tz.display(world_ft[2])
+
+        self.gui.wp_fx.display(wp_ft[3])
+        self.gui.wp_fy.display(wp_ft[4])
+        self.gui.wp_fz.display(wp_ft[5])
+        self.gui.wp_tx.display(wp_ft[0])
+        self.gui.wp_ty.display(wp_ft[1])
+        self.gui.wp_tz.display(wp_ft[2])
+
+    def gui_lockout_section_enable(self, is_enabled):
+        self.gui.mode_dial.setEnabled(is_enabled)
+        self.gui.load_toolpath_button.setEnabled(is_enabled)
+        self.gui.load_config_button.setEnabled(is_enabled)
+        self.gui.wp_tab.setEnabled(is_enabled)
+
 
     def display_status_lights(self, safety_status):
         def col(b):
@@ -373,7 +401,6 @@ class ControllerStateMachine(QtCore.QObject):
                 print("Warning: Extra msgs in queue: ", i)
         
             fb = self.egm_state.robot_message.feedBack.cartesian
-
             pos = np.array([fb.pos.x, fb.pos.y, fb.pos.z])/1000.0 # mm -> m
             quat = [fb.orient.u0, fb.orient.u1, fb.orient.u2, fb.orient.u3]
             robot_pos_measured = rox.Transform(rox.q2R(quat), pos)
@@ -509,7 +536,7 @@ class ControllerStateMachine(QtCore.QObject):
                 self.toolpath_state_changed = False
                 self.signal_status.emit("Standby", "")
                 self.start_clicked = False
-                self.gui.mode_dial.setEnabled(True)
+                self.signal_gui_lockout_section_enable.emit(True)
                 
             if self.start_clicked:
                 self.start_clicked = False
@@ -521,21 +548,22 @@ class ControllerStateMachine(QtCore.QObject):
             if self.toolpath_state_changed:
                 self.toolpath_state_changed = False
                 self.signal_status.emit("Running", "green")
-                self.signal_mode_select_enable.emit(False)
+                self.signal_gui_lockout_section_enable.emit(False)
                 self.stop_clicked = False
                 self.hold_clicked = False
 
             if self.stop_clicked or not self.safety_status.toolpath_ready():
-                self.stop_clicked = False
                 self.toolpath_state = "standby"
                 self.toolpath_state_changed = True
+                print("Stopped toolpath! stop_clicked: {} safety_status: {}".format(self.stop_clicked, self.safety_status))
+                self.stop_clicked = False
 
             if self.hold_clicked:
                 self.hold_clicked = False
                 self.toolpath_state = "hold_requested"
                 self.toolpath_state_changed = True
 
-            self.run_toopath()
+            self.run_toopath(simulate_force, zero_force)
         ##############################################################################  
         elif self.toolpath_state == "hold_requested":
             if self.toolpath_state_changed:
@@ -543,11 +571,12 @@ class ControllerStateMachine(QtCore.QObject):
                 self.signal_status.emit("Hold Requested", "yellow")
 
             if self.stop_clicked or not self.safety_status.toolpath_ready():
-                self.stop_clicked = False
                 self.toolpath_state = "standby"
                 self.toolpath_state_changed = True
+                print("Stopped toolpath! stop_clicked: {} safety_status: {}".format(self.stop_clicked, self.safety_status))
+                self.stop_clicked = False
 
-            self.run_toopath()
+            self.run_toopath(simulate_force, zero_force)
             current_cmd = self.tp_ctrl.commands[self.tp_ctrl.program_counter]
             if type(current_cmd) is self.tp_ctrl.CmdMoveL or  type(current_cmd) is self.tp_ctrl.CmdPosCtrl:
                 self.toolpath_state = "standby"
@@ -556,9 +585,21 @@ class ControllerStateMachine(QtCore.QObject):
         else:
             raise ValueError("Wrong value for toolpath_state: ", str(self.toolpath_state))
 
-    def run_toopath(self):
-        force = [0.,0.,0.,0.,0.,0.] # TODO
-        is_done, self.tool_wp_position = self.tp_ctrl.step(self.tool_wp_position, force)
+    def run_toopath(self, simulate_force, zero_force):
+        if simulate_force:
+            force = self.force_sim.read_ft_streaming(self.tool_wp_position.p)
+            #force += np.random.normal(loc=0.0, scale = 5.0, size=(6,))
+            self.signal_display_ft.emit(list(force), list(force)) # TODO update based on timer
+        else:
+            force = [0.,0.,0.,0.,0.,0.] # TODO
+
+        is_done, self.tool_wp_position = self.tp_ctrl.step(self.tool_wp_position, force, disable_f_ctrl = zero_force)
+
+        if is_done:
+            self.toolpath_state = "standby"
+            self.toolpath_state_changed = True
+            self.safety_status.toolpath_loaded = False
+
         self.tool_position = self.work_offset * self.tool_wp_position
         self.local_robot_position = self.tool_position * self.tool_offset.inv()
 

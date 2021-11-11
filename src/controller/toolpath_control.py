@@ -15,6 +15,7 @@ moveL_speed_lin: linear tool speed during moveL commands
 moveL_speed_ang: angular tool speed during moveL commands
 load_speed: tool speed during force loading
 unload_speed: tool speed duruing force unloading
+
 disable_f_ctrl: disable force control (True/False)
     Force control commands do not move the tool in the force control direction
 '''
@@ -68,7 +69,7 @@ class ToolpathControl():
             else:
                 raise ValueError("Wrong toolpath command: " + line)
 
-    def step(self, tool_pose, force):
+    def step(self, tool_pose, force, disable_f_ctrl = False):
         # TODO check if a program is loaded
 
         current_cmd = self.commands[self.program_counter]
@@ -79,10 +80,10 @@ class ToolpathControl():
             inc, T = self.moveL(current_cmd, tool_pose, force)
 
         elif type(current_cmd) is self.CmdLoadZ:
-            inc, T = self.loadZ(tool_pose, force)
+            inc, T = self.loadZ(tool_pose, force, disable_f_ctrl)
 
         elif type(current_cmd) is self.CmdForceCtrlZ:
-            inc, T = self.forceCtrlZ(current_cmd, tool_pose, force)
+            inc, T = self.forceCtrlZ(current_cmd, tool_pose, force, disable_f_ctrl)
 
         elif type(current_cmd) is self.CmdPosCtrl:
             inc, T = self.posCtrl(current_cmd)
@@ -95,9 +96,9 @@ class ToolpathControl():
 
         # TODO check if we're at the end of the program
         if inc:
-            self.program_counter += 1
             if self.program_counter == len(self.commands) - 1:
                 return True, T
+            self.program_counter += 1
 
         return False, T
 
@@ -130,10 +131,10 @@ class ToolpathControl():
 
         return pos_is_done and rot_is_done, rox.Transform(R, p)
 
-    def loadZ(self, tool_pose, force):
+    def loadZ(self, tool_pose, force, disable_f_ctrl):
         # TODO make sure to tare F/T sensor
 
-        if self.params['disable_f_ctrl']:
+        if disable_f_ctrl:
             return True, tool_pose
 
         f_z_meas = force[5]
@@ -144,14 +145,14 @@ class ToolpathControl():
         else:
             return True, tool_pose
 
-    def forceCtrlZ(self, cmd, tool_pose, force):
+    def forceCtrlZ(self, cmd, tool_pose, force, disable_f_ctrl):
         # TODO limit to force_epsilon so we don't lose contact
 
         # TODO lookahead
         f_z_meas = force[5]
         R = rox.q2R([cmd.q0, cmd.qx, cmd.qy, cmd.qz])
 
-        if self.params['disable_f_ctrl']:
+        if disable_f_ctrl:
             p = [cmd.x, cmd.y, tool_pose.p[2]]
         
         else: # force control mode
@@ -242,8 +243,7 @@ def main():
         "moveL_speed_lin": 0.1,
         "moveL_speed_ang": np.deg2rad(10.0),
         "load_speed": 0.001,
-        "unload_speed": 0.01,
-        "disable_f_ctrl": True
+        "unload_speed": 0.01
         }
 
     for i in range(20):
