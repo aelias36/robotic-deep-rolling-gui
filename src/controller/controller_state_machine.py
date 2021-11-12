@@ -81,6 +81,7 @@ class ControllerStateMachine(QtCore.QObject):
     signal_toolpath_name = QtCore.pyqtSignal(str)
     signal_status_lights = QtCore.pyqtSignal(SafetyStatus)
     signal_display_ft = QtCore.pyqtSignal(list, list)
+    signal_total_cmds = QtCore.pyqtSignal(str)
 
     def set_up_signals(self):
         self.signal_display_positions.connect(self.gui.display_position)
@@ -96,26 +97,29 @@ class ControllerStateMachine(QtCore.QObject):
         self.signal_toolpath_name.connect(self.gui.toolpath_name.setText)
         self.signal_status_lights.connect(self.gui.display_status_lights)
         self.signal_display_ft.connect(self.gui.display_ft)
+        self.signal_total_cmds.connect(self.gui.total_cmds.setText)
 
 
     def __init__(self, egm, gui):
         QtCore.QObject.__init__(self)
 
+        self.gui = gui
+        self.set_up_signals()
+
         self.safety_status = SafetyStatus()
-        self.prev_safety_status = SafetyStatus()
-        self.last_displayed_safety_status = None
+        self.prev_safety_status = None
 
         k = 1.0e5
         self.force_sim = ft_simulation.FTSim([0,0,-k])
 
         self.egm = egm
-        self.gui = gui
+        
         self.tp_ctrl = toolpath_control.ToolpathControl()
 
         self.is_running = True
         self.mode = "manual_jog"
-        self.mode_changed = True
         self.signal_mode.emit(self.mode)
+        self.signal_status.emit("EGM not ready", "red")
 
         self.work_offset = rox.Transform(np.eye(3), [0.0,0.0,0.0])
         self.signal_display_wp_offset.emit(self.work_offset)
@@ -131,10 +135,8 @@ class ControllerStateMachine(QtCore.QObject):
         self.tool_wp_position = None
 
         self.toolpath_state = "standby"
-        self.toolpath_state_changed = False
+        self.prev_toolpath_state = None
 
-        self.set_up_signals()
-        
         self.display_DRO = True
         self.DRO_timer = QTimer()
         self.DRO_timer.start(33) # ms
@@ -162,14 +164,11 @@ class ControllerStateMachine(QtCore.QObject):
 
         self.signal_toolpath_name.emit(file_name)
 
-        self.toolpath_state = "standby"
-        self.toolpath_state_changed = True
-
         self.safety_status.toolpath_loaded = True
 
-        self.gui.total_cmds.setText(str(len(self.tp_ctrl.commands))) #TODO use emit
+        self.signal_total_cmds.emit(str(len(self.tp_ctrl.commands)))
         self.signal_current_cmd_number.emit(str(self.tp_ctrl.program_counter+1))
-        self.signal_progress_bar.emit(round((self.tp_ctrl.program_counter+1) / len(self.tp_ctrl.commands) * 100.0))
+        self.signal_progress_bar.emit(0)
         self.signal_current_cmd_text.emit(str(self.tp_ctrl.commands[self.tp_ctrl.program_counter]))
 
     def load_config_file(self, filename):
@@ -213,31 +212,6 @@ class ControllerStateMachine(QtCore.QObject):
     def step(self):
         self.prev_safety_status = dataclasses.replace(self.safety_status)
 
-        # Go through all the GUI queues
-        self.start_clicked = self.gui.start_clicked_q.get_and_clear() is not None # TODO pass in as parameters, not global
-        self.stop_clicked = self.gui.stop_clicked_q.get_and_clear() is not None
-        self.hold_clicked = self.gui.hold_clicked_q.get_and_clear() is not None
-        
-        new_mode = self.gui.mode_q.get_and_clear()
-        if new_mode is not None:
-            self.mode = new_mode
-            self.mode_changed = True
-
-        new_wp_offset = self.gui.wp_offset_q.get_and_clear()
-        if new_wp_offset is not None:
-            self.work_offset = new_wp_offset
-            self.safety_status.wp_os_loaded = True
-
-        try:
-            self.load_config_file(self.gui.config_file_q.get_nowait())
-        except Empty:
-            pass
-
-        try:
-            self.load_toolpath_file(self.gui.toolpath_file_q.get_nowait())
-        except Empty:
-            pass
-
         # Receive EGM message
         self.egm_connected, self.egm_state = self.egm.receive_from_robot(.1)
         if self.egm_connected:
@@ -264,14 +238,11 @@ class ControllerStateMachine(QtCore.QObject):
             if self.display_DRO:
                 self.signal_display_positions.emit(tool_position_measured, tool_wp_position_measured)
                 self.display_DRO = False
-            
+
+        # Update safety status based on new messages    
         self.safety_status.egm_connected = self.egm_connected
         self.safety_status.rapid_running = self.egm_connected and self.egm_state.rapid_running
         self.safety_status.motors_on = self.egm_connected and self.egm_state.motors_on
-
-
-        if self.safety_status != self.prev_safety_status:
-            self.signal_status_lights.emit(self.safety_status)
 
         if self.safety_status.egm_ok() and not self.prev_safety_status.egm_ok():
             self.local_robot_position = robot_pos_measured
@@ -280,22 +251,46 @@ class ControllerStateMachine(QtCore.QObject):
             self.tool_position = self.local_robot_position * self.tool_offset
             self.tool_wp_position = self.work_offset.inv() * self.tool_position
 
-        # Run control based on current mode
-        if self.mode_changed:
-            self.mode_changed = False # TODO avoid resetting flags
+        # Go through all the GUI queues
+        start_clicked = self.gui.start_clicked_q.get_and_clear() is not None
+        stop_clicked = self.gui.stop_clicked_q.get_and_clear() is not None
+        hold_clicked = self.gui.hold_clicked_q.get_and_clear() is not None
+        
+        new_mode = self.gui.mode_q.get_and_clear()
+        mode_changed = new_mode is not None
+        if mode_changed:
+            self.mode = new_mode
             self.signal_mode.emit(self.mode)
-            self.toolpath_state_changed = True
 
+        new_wp_offset = self.gui.wp_offset_q.get_and_clear()
+        if new_wp_offset is not None:
+            self.work_offset = new_wp_offset
+            self.safety_status.wp_os_loaded = True
+
+        try:
+            self.load_config_file(self.gui.config_file_q.get_nowait())
+        except Empty:
+            pass
+
+        try:
+            self.load_toolpath_file(self.gui.toolpath_file_q.get_nowait())
+        except Empty:
+            pass
+
+        # Run control
         if self.mode == "manual_jog":
-            self.mode_manual_jog()
+            self.mode_manual_jog(mode_changed)
         elif self.mode == "toolpath":
-            self.mode_toolpath()
+            self.mode_toolpath(mode_changed, start_clicked, stop_clicked, hold_clicked)
         elif self.mode == "simulator":
-            self.mode_toolpath(simulate_force = True, zero_force = False)
+            self.mode_toolpath(mode_changed, start_clicked, stop_clicked, hold_clicked, simulate_force = True)
         elif self.mode == "zero_force":
-            self.mode_toolpath(simulate_force = False, zero_force = True)
+            self.mode_toolpath(mode_changed, start_clicked, stop_clicked, hold_clicked, zero_force = True)
         else:
             raise ValueError("Wrong state: " + str(self.state))
+
+        if self.safety_status != self.prev_safety_status:
+            self.signal_status_lights.emit(self.safety_status)
 
         # Send command to robot
         if self.local_robot_position is not None:
@@ -304,8 +299,8 @@ class ControllerStateMachine(QtCore.QObject):
             t_1 = time.perf_counter()
             send_res = self.egm.send_to_robot_cart(pos, quat)
 
-    def mode_manual_jog(self):
-        if self.safety_status != self.prev_safety_status:
+    def mode_manual_jog(self, mode_changed):
+        if (self.safety_status != self.prev_safety_status) or mode_changed:
             if self.safety_status.egm_ok():
                 self.signal_status.emit("Running", "")
             else:
@@ -378,64 +373,56 @@ class ControllerStateMachine(QtCore.QObject):
 
         if v_des is not None or v_rot_des is not None:
             self.local_robot_position = self.tool_position * self.tool_offset.inv()
-        
-        #print((t_1 - t_0) / TIMESTEP * 100, '%')
 
-    # TODO avoid having to reset flags by making them function parameters
-    def mode_toolpath(self, simulate_force = False, zero_force = False):
+    def mode_toolpath(self, mode_changed, start_clicked, stop_clicked, hold_clicked, simulate_force = False, zero_force = False):
+        toolpath_state_changed = self.prev_toolpath_state != self.toolpath_state
+        self.prev_toolpath_state = self.toolpath_state
+
         if self.toolpath_state == "standby":
-            if self.toolpath_state_changed:
-                self.toolpath_state_changed = False
-                self.signal_status.emit("Standby", "")
-                self.start_clicked = False
+            if toolpath_state_changed or mode_changed or self.safety_status != self.prev_safety_status:
+                if self.safety_status.toolpath_ready():
+                    self.signal_status.emit("Standby - Ready!", "")
+                else:
+                    self.signal_status.emit("Standby - Not Ready", "")
                 self.signal_gui_lockout_section_enable.emit(True)
                 
-            if self.start_clicked:
-                self.start_clicked = False
+            elif start_clicked:
                 if self.safety_status.toolpath_ready():
                     self.toolpath_state = "running"
-                    self.toolpath_state_changed = True
-        ##############################################################################
+        
+
         elif self.toolpath_state == "running":
-            if self.toolpath_state_changed:
-                self.toolpath_state_changed = False
+            if toolpath_state_changed:
                 self.signal_status.emit("Running", "green")
                 self.signal_gui_lockout_section_enable.emit(False)
-                self.stop_clicked = False
-                self.hold_clicked = False
 
-            if self.stop_clicked or not self.safety_status.toolpath_ready():
+            elif stop_clicked or not self.safety_status.toolpath_ready():
                 self.toolpath_state = "standby"
-                self.toolpath_state_changed = True
-                print("Stopped toolpath! stop_clicked: {} safety_status: {}".format(self.stop_clicked, self.safety_status))
-                self.stop_clicked = False
+                print("Stopped toolpath! stop_clicked: {} safety_status: {}".format(stop_clicked, self.safety_status))
 
-            if self.hold_clicked:
-                self.hold_clicked = False
+            elif hold_clicked:
                 self.toolpath_state = "hold_requested"
-                self.toolpath_state_changed = True
 
-            self.run_toopath(simulate_force, zero_force)
-        ##############################################################################  
+            self.run_toopath(simulate_force, zero_force)        
+
+
         elif self.toolpath_state == "hold_requested":
-            if self.toolpath_state_changed:
-                self.toolpath_state_changed = False
+            if toolpath_state_changed:
                 self.signal_status.emit("Hold Requested", "yellow")
 
-            if self.stop_clicked or not self.safety_status.toolpath_ready():
+            if stop_clicked or not self.safety_status.toolpath_ready():
                 self.toolpath_state = "standby"
-                self.toolpath_state_changed = True
-                print("Stopped toolpath! stop_clicked: {} safety_status: {}".format(self.stop_clicked, self.safety_status))
-                self.stop_clicked = False
+                print("Stopped toolpath! stop_clicked: {} safety_status: {}".format(stop_clicked, self.safety_status))
 
             self.run_toopath(simulate_force, zero_force)
             current_cmd = self.tp_ctrl.commands[self.tp_ctrl.program_counter]
             if type(current_cmd) is self.tp_ctrl.CmdMoveL or  type(current_cmd) is self.tp_ctrl.CmdPosCtrl:
                 self.toolpath_state = "standby"
-                self.toolpath_state_changed = True
-        ############################################################################## 
+        
         else:
             raise ValueError("Wrong value for toolpath_state: ", str(self.toolpath_state))
+
+        
 
     def run_toopath(self, simulate_force, zero_force):
         if simulate_force:
@@ -449,7 +436,6 @@ class ControllerStateMachine(QtCore.QObject):
 
         if is_done:
             self.toolpath_state = "standby"
-            self.toolpath_state_changed = True
             self.safety_status.toolpath_loaded = False
 
         self.tool_position = self.work_offset * self.tool_wp_position
@@ -458,7 +444,6 @@ class ControllerStateMachine(QtCore.QObject):
         self.signal_current_cmd_number.emit(str(self.tp_ctrl.program_counter+1))
         self.signal_progress_bar.emit(round((self.tp_ctrl.program_counter+1) / len(self.tp_ctrl.commands) * 100.0))
         self.signal_current_cmd_text.emit(str(self.tp_ctrl.commands[self.tp_ctrl.program_counter]))
-
 
 def main():
     egm = rpi_abb_irc5.EGM()
