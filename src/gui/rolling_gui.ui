@@ -3198,6 +3198,9 @@ color: white;</string>
       <property name="decimals">
        <number>6</number>
       </property>
+      <property name="minimum">
+       <double>-99.989999999999995</double>
+      </property>
       <property name="singleStep">
        <double>0.001000000000000</double>
       </property>
@@ -3291,6 +3294,9 @@ color: white;</string>
       <property name="decimals">
        <number>3</number>
       </property>
+      <property name="minimum">
+       <double>-360.000000000000000</double>
+      </property>
       <property name="maximum">
        <double>360.000000000000000</double>
       </property>
@@ -3317,6 +3323,9 @@ color: white;</string>
       </property>
       <property name="decimals">
        <number>6</number>
+      </property>
+      <property name="minimum">
+       <double>-99.989999999999995</double>
       </property>
       <property name="singleStep">
        <double>0.001000000000000</double>
@@ -3411,6 +3420,9 @@ color: white;</string>
       <property name="decimals">
        <number>3</number>
       </property>
+      <property name="minimum">
+       <double>-360.000000000000000</double>
+      </property>
       <property name="maximum">
        <double>360.000000000000000</double>
       </property>
@@ -3434,6 +3446,9 @@ color: white;</string>
       </property>
       <property name="decimals">
        <number>6</number>
+      </property>
+      <property name="minimum">
+       <double>-99.989999999999995</double>
       </property>
       <property name="singleStep">
        <double>0.001000000000000</double>
@@ -3653,6 +3668,9 @@ color: white;</string>
       <property name="decimals">
        <number>6</number>
       </property>
+      <property name="minimum">
+       <double>-99.989999999999995</double>
+      </property>
       <property name="singleStep">
        <double>0.001000000000000</double>
       </property>
@@ -3796,6 +3814,9 @@ color: white;</string>
       <property name="decimals">
        <number>6</number>
       </property>
+      <property name="minimum">
+       <double>-99.989999999999995</double>
+      </property>
       <property name="singleStep">
        <double>0.001000000000000</double>
       </property>
@@ -3912,6 +3933,9 @@ color: white;</string>
       </property>
       <property name="decimals">
        <number>6</number>
+      </property>
+      <property name="minimum">
+       <double>-99.989999999999995</double>
       </property>
       <property name="singleStep">
        <double>0.001000000000000</double>
@@ -4320,6 +4344,9 @@ color: white;</string>
       <property name="decimals">
        <number>6</number>
       </property>
+      <property name="minimum">
+       <double>-99.989999999999995</double>
+      </property>
       <property name="singleStep">
        <double>0.001000000000000</double>
       </property>
@@ -4367,6 +4394,9 @@ color: white;</string>
       <property name="decimals">
        <number>6</number>
       </property>
+      <property name="minimum">
+       <double>-99.989999999999995</double>
+      </property>
       <property name="singleStep">
        <double>0.001000000000000</double>
       </property>
@@ -4390,6 +4420,9 @@ color: white;</string>
       </property>
       <property name="decimals">
        <number>6</number>
+      </property>
+      <property name="minimum">
+       <double>-99.989999999999995</double>
       </property>
       <property name="singleStep">
        <double>0.001000000000000</double>
