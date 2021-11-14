@@ -37,28 +37,45 @@ from collections import namedtuple
 import struct
 import time
 
+import threading
+
 NET_FT_device_settings=namedtuple('net_ft_settings', ['ft', 'conv', 'maxrange', 'bias', 'ipaddress', 'rdt_rate', 'device_status'])
 
 class NET_FT(object):
     
     def __init__(self, net_ft_host='192.168.1.1'):
+        self._streaming=False
+        self._last_streaming_command_time=0
+
         self.host=net_ft_host
         self.base_url='http://' + net_ft_host
         self.socket=socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind(('',0))
         self.port=self.socket.getsockname()[1]
                 
-        self.device_settings=self.read_device_settings()
-        
         self.tare=np.ndarray([6])
-        
-        self._streaming=False
-        self._last_streaming_command_time=0
-                
+
+
+        #self.device_settings=self.read_device_settings()
+        self.device_settings = None
+        self.device_settings_set = threading.Event()
+        self.get_settings_thread = threading.Thread(target = self.async_set_device_settings, daemon = True)
+        self.get_settings_thread.start()
+
+    
+    def async_set_device_settings(self):
+        self.device_settings = self.read_device_settings()
+        self.device_settings_set.set()
+
     def _read_netftapi2(self):
-        
         url="/".join([self.base_url, 'netftapi2.xml'])
-        res=requests.get(url)
+        res = None
+        while res is None:
+            try:
+                res = requests.get(url, timeout = 0.01)
+            except requests.exceptions.Timeout:
+                pass
+
         res.raise_for_status()
         
         soup=BeautifulSoup(res.text)
@@ -74,7 +91,7 @@ class NET_FT(object):
         if soup.find('scfgfu').text != 'N':
             raise Exception('ATI Net F/T must use MKS units')
         
-        if soup.find('scfgtu').text != 'N-m':
+        if soup.find('scfgtu').text != 'N-m' and soup.find('scfgtu').text != 'Nm':
             raise Exception('ATI Net F/T must use MKS units')
         
         if soup.find('comrdte').text != "Enabled":
@@ -96,42 +113,48 @@ class NET_FT(object):
         
         return NET_FT_device_settings(ft, conv, maxrange, bias, ipaddress, rdt_rate, device_status)
         
-    def set_tare_from_ft(self):
-        settings=self.read_device_settings()
-        self.tare=settings.ft
+    # def set_tare_from_ft(self):
+    #     settings=self.read_device_settings()
+    #     self.tare=settings.ft
         
     def clear_tare(self):
         self.tare=np.ndarray([6])
         
-    def read_ft_http(self):
-        settings=self.read_device_settings()
-        if settings.device_status != 0:
-            raise Exception('ATI Net F/T returning error status code: ' + str(settings.device_status))
+    # def read_ft_http(self):
+    #     settings=self.read_device_settings()
+    #     if settings.device_status != 0:
+    #         raise Exception('ATI Net F/T returning error status code: ' + str(settings.device_status))
         
-        return settings.ft-self.tare
+    #     return settings.ft-self.tare
     
-    def try_read_ft_http(self):
-        try:
-            settings=self.read_device_settings()        
-            return settings.ft-self.tare, settings.device_status
-        except:
-            return None, 0x80000000
+    # def try_read_ft_http(self):
+    #     try:
+    #         settings=self.read_device_settings()        
+    #         return settings.ft-self.tare, settings.device_status
+    #     except Exception:
+    #         return None, 0x80000000
     
     def start_streaming(self):
-        sample_count=10*self.device_settings.rdt_rate
-        dat=struct.pack('>HHI',0x1234, 0x0002, sample_count)
-        self.socket.sendto(dat, (self.host, 49152))
         self._streaming=True
-        self._last_streaming_command_time=time.time()
+        if self.device_settings_set.is_set():
+            sample_count=10*self.device_settings.rdt_rate
+            dat=struct.pack('>HHI',0x1234, 0x0002, sample_count)
+            self.socket.sendto(dat, (self.host, 49152))
+
+            self._last_streaming_command_time=time.time()
     
     def stop_streaming(self):
-        dat=struct.pack('>HHI',0x1234, 0x0000, 0)
-        self.socket.sendto(dat, (self.host, 49152))
         self._streaming=False
-        self._last_streaming_command_time=time.time()
+        if self.device_settings_set.is_set():
+            dat=struct.pack('>HHI',0x1234, 0x0000, 0)
+            self.socket.sendto(dat, (self.host, 49152))
+            
+            self._last_streaming_command_time=time.time()
     
     def try_read_ft_streaming(self, timeout=0):
-        
+        if not self.device_settings_set.is_set():
+            return False, None, 0
+
         #Re-up the streaming if running out of packets
         if (time.time() - self._last_streaming_command_time) > 5:
             if (self._streaming):                
@@ -150,7 +173,7 @@ class NET_FT(object):
                 break            
             try:
                 (buf, addr)=s.recvfrom(1024)
-            except:            
+            except Exception:            
                 return False, None, 0
             
             if (drop_count > 100):
@@ -184,4 +207,4 @@ class NET_FT(object):
         if (self._streaming):
             try:
                 self.stop_streaming()
-            except: pass
+            except Exception: pass

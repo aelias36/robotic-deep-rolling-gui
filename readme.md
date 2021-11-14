@@ -24,6 +24,8 @@ This file is based on this python3 code https://github.com/hehonglu123/MARS_Samp
 
 That code is based on this python2 code https://github.com/rpiRobotics/rpi_ati_net_ft
 
+Code has been modified to be nonblocking
+
 ### `src > ft_simulation`
 Robot deflection simulation for simulating force/torque sensor readings when using RobotStudio
 

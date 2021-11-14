@@ -19,10 +19,12 @@ import dataclasses
 from queue import Empty
 
 from gui import rolling_gui
-import general_robotics_toolbox as rox
 from controller import toolpath_control
 from ft_simulation import ft_simulation
 from rpi_abb_irc5 import rpi_abb_irc5
+from ft_sensor import rpi_ati_net_ft
+
+import general_robotics_toolbox as rox
 
 from PyQt5.QtWidgets import QFileDialog, QApplication
 from PyQt5 import QtCore
@@ -30,6 +32,11 @@ from PyQt5.QtCore import QTimer
     
 
 TIMESTEP = 0.004
+
+FT_SENSOR_IP = "192.168.1.200" # TODO
+F_POS_THRESH = 20.0 # N
+F_F_CTRL_THRESH = 2000.0 # N
+
 
 @dataclasses.dataclass
 class SafetyStatus:
@@ -113,7 +120,9 @@ class ControllerStateMachine(QtCore.QObject):
         self.force_sim = ft_simulation.FTSim([0,0,-k])
 
         self.egm = egm
-        
+        self.net_ft = rpi_ati_net_ft.NET_FT(FT_SENSOR_IP)
+        self.net_ft.start_streaming()
+
         self.tp_ctrl = toolpath_control.ToolpathControl()
 
         self.is_running = True
@@ -150,7 +159,8 @@ class ControllerStateMachine(QtCore.QObject):
 
     def stop_loop(self):
         self.is_running = False
-        self.thread.join()
+        #self.net_ft.stop_get_settings_thread.set()
+        #self.thread.join()
 
     def state_machine_loop(self):
         while self.is_running:
@@ -239,14 +249,39 @@ class ControllerStateMachine(QtCore.QObject):
                 self.signal_display_positions.emit(tool_position_measured, tool_wp_position_measured)
                 self.display_DRO = False
 
-        # Update safety status based on new messages    
+        # Update EGM safety status based on new messages    
         self.safety_status.egm_connected = self.egm_connected
         self.safety_status.rapid_running = self.egm_connected and self.egm_state.rapid_running
         self.safety_status.motors_on = self.egm_connected and self.egm_state.motors_on
 
+
+        # Receive F/T sensor messages
+        # [Tx, Ty, Tz, Fx, Fy, Fz]
+        ft_connected, ft, ft_status = self.net_ft.try_read_ft_streaming()
+
+        # Apply lever arm to go from F/T at sensor frame to F/T at tool frame TODO
+        #T = ft[0:2]
+        #F = ft[3:5]
+        # Torque 
+        # Represent F/T at the tool frame in the tool frame TODO
+
+        # Display F/T sensor reading TODO
+
+
+
+        # Updated F/T safety status based on new messages
+        self.safety_status.ft_connected = ft_connected
+        self.safety_status.ft_status_normal = ft_connected and ft_status == 0
+        f_magnitude = 0 # TODO
+        self.safety_status.f_below_pos_thresh = ft_connected and f_magnitude < F_POS_THRESH
+        self.safety_status.f_below_f_ctrl_thresh = ft_connected and f_magnitude < F_F_CTRL_THRESH
+
+        # Update robot internal state if EGM started back up
         if self.safety_status.egm_ok() and not self.prev_safety_status.egm_ok():
             self.local_robot_position = robot_pos_measured
 
+        # Update local positions for use by the controller
+        # TODO do we need this here?
         if self.safety_status.egm_ok():
             self.tool_position = self.local_robot_position * self.tool_offset
             self.tool_wp_position = self.work_offset.inv() * self.tool_position
@@ -296,7 +331,6 @@ class ControllerStateMachine(QtCore.QObject):
         if self.local_robot_position is not None:
             pos = self.local_robot_position.p * 1000.0 # m -> mm
             quat = rox.R2q(self.local_robot_position.R)
-            t_1 = time.perf_counter()
             send_res = self.egm.send_to_robot_cart(pos, quat)
 
     def mode_manual_jog(self, mode_changed):
