@@ -19,7 +19,7 @@ import dataclasses
 from queue import Empty
 
 from gui import rolling_gui
-from controller import toolpath_control
+from controller import toolpath_control, logger
 from ft_simulation import ft_simulation
 from rpi_abb_irc5 import rpi_abb_irc5
 from ft_sensor import rpi_ati_net_ft
@@ -116,7 +116,7 @@ class ControllerStateMachine(QtCore.QObject):
         self.safety_status = SafetyStatus()
         self.prev_safety_status = None
 
-        k = 1.0e5
+        k = 717046.0 # N / m
         self.force_sim = ft_simulation.FTSim([0,0,-k])
 
         self.egm = egm
@@ -124,6 +124,8 @@ class ControllerStateMachine(QtCore.QObject):
         self.net_ft.start_streaming()
 
         self.tp_ctrl = toolpath_control.ToolpathControl()
+
+        self.logger = logger.Logger()
 
         self.is_running = True
         self.mode = "manual_jog"
@@ -159,12 +161,12 @@ class ControllerStateMachine(QtCore.QObject):
 
     def stop_loop(self):
         self.is_running = False
-        #self.net_ft.stop_get_settings_thread.set()
         #self.thread.join()
 
     def state_machine_loop(self):
         while self.is_running:
             self.step()
+        self.logger.stop_logging()
 
     def load_toolpath_file(self, file_name):
         with open(file_name) as f:
@@ -254,28 +256,6 @@ class ControllerStateMachine(QtCore.QObject):
         self.safety_status.rapid_running = self.egm_connected and self.egm_state.rapid_running
         self.safety_status.motors_on = self.egm_connected and self.egm_state.motors_on
 
-
-        # Receive F/T sensor messages
-        # [Tx, Ty, Tz, Fx, Fy, Fz]
-        ft_connected, ft, ft_status = self.net_ft.try_read_ft_streaming()
-
-        # Apply lever arm to go from F/T at sensor frame to F/T at tool frame TODO
-        #T = ft[0:2]
-        #F = ft[3:5]
-        # Torque 
-        # Represent F/T at the tool frame in the tool frame TODO
-
-        # Display F/T sensor reading TODO
-
-
-
-        # Updated F/T safety status based on new messages
-        self.safety_status.ft_connected = ft_connected
-        self.safety_status.ft_status_normal = ft_connected and ft_status == 0
-        f_magnitude = 0 # TODO
-        self.safety_status.f_below_pos_thresh = ft_connected and f_magnitude < F_POS_THRESH
-        self.safety_status.f_below_f_ctrl_thresh = ft_connected and f_magnitude < F_F_CTRL_THRESH
-
         # Update robot internal state if EGM started back up
         if self.safety_status.egm_ok() and not self.prev_safety_status.egm_ok():
             self.local_robot_position = robot_pos_measured
@@ -285,6 +265,45 @@ class ControllerStateMachine(QtCore.QObject):
         if self.safety_status.egm_ok():
             self.tool_position = self.local_robot_position * self.tool_offset
             self.tool_wp_position = self.work_offset.inv() * self.tool_position
+
+        # Receive F/T sensor messages
+        # [Tx, Ty, Tz, Fx, Fy, Fz]
+        ft_connected, ft, ft_status = self.net_ft.try_read_ft_streaming()
+
+        if ft_connected:
+            # Apply lever arm to go from F/T at sensor frame to F/T at tool frame
+            # This is still represented in the sensor frame
+            torque_sensor = ft[0:2]
+            force_sensor = ft[3:5]
+            # offset from tool to FT sensor
+            T_tool_ft = self.tool_offset.inv() * self.ft_offset
+            torque_tool = torque_sensor + rox.hat(T_tool_ft.p).dot(force_sensor)
+            force_tool = force_sensor
+
+            # Represent F/T at the tool frame in the world frame
+            torque_tool_world_f = self.tool_position.R.T.dot(T_tool_ft.R.T.dot(torque_tool))
+            force_tool_world_f = self.tool_position.R.T.dot(T_tool_ft.R.T.dot(force_tool))
+            ft_world_f = np.append(torque_tool_world_f, force_tool_world_f)
+            
+            # Represent F/T at the tool frame in the workpiece frame
+            torque_tool_wp_f = self.work_offset.R.dot(torque_tool_world_f)
+            force_tool_wp_f = self.work_offset.R.dot(force_tool_world_f)
+            ft_wp_f = np.append(torque_tool_wp_f, force_tool_wp_f)
+        else:
+            ft_world_f = np.array([0.,0.,0.,0.,0.,0.])
+            ft_wp_f = np.array([0.,0.,0.,0.,0.,0.])
+
+        # Display F/T sensor reading
+        # TODO update based on timer
+        self.signal_display_ft.emit(list(ft_world_f), list(ft_wp_f))
+
+        # Updated F/T safety status based on new messages
+        self.safety_status.ft_connected = ft_connected
+        self.safety_status.ft_status_normal = ft_connected and ft_status == 0
+        f_magnitude = np.linalg.norm(ft_wp_f)
+        self.safety_status.f_below_pos_thresh = ft_connected and f_magnitude < F_POS_THRESH
+        self.safety_status.f_below_f_ctrl_thresh = ft_connected and f_magnitude < F_F_CTRL_THRESH
+
 
         # Go through all the GUI queues
         start_clicked = self.gui.start_clicked_q.get_and_clear() is not None
@@ -316,11 +335,15 @@ class ControllerStateMachine(QtCore.QObject):
         if self.mode == "manual_jog":
             self.mode_manual_jog(mode_changed)
         elif self.mode == "toolpath":
-            self.mode_toolpath(mode_changed, start_clicked, stop_clicked, hold_clicked)
+            self.mode_toolpath(mode_changed, start_clicked, stop_clicked, hold_clicked, ft_wp_f)
         elif self.mode == "simulator":
-            self.mode_toolpath(mode_changed, start_clicked, stop_clicked, hold_clicked, simulate_force = True)
+            if self.tool_wp_position is not None:
+                ft_simulated = self.force_sim.read_ft_streaming(self.tool_wp_position.p)
+            else:
+                ft_simulated = np.array([0.,0.,0.,0.,0.,0.])
+            self.mode_toolpath(mode_changed, start_clicked, stop_clicked, hold_clicked, ft_simulated)
         elif self.mode == "zero_force":
-            self.mode_toolpath(mode_changed, start_clicked, stop_clicked, hold_clicked, zero_force = True)
+            self.mode_toolpath(mode_changed, start_clicked, stop_clicked, hold_clicked, ft_wp_f, disable_f_ctrl = True)
         else:
             raise ValueError("Wrong state: " + str(self.state))
 
@@ -332,6 +355,33 @@ class ControllerStateMachine(QtCore.QObject):
             pos = self.local_robot_position.p * 1000.0 # m -> mm
             quat = rox.R2q(self.local_robot_position.R)
             send_res = self.egm.send_to_robot_cart(pos, quat)
+
+        if self.logger.is_logging:
+            if self.mode == "simulator":
+                ft_log = ft_simulated
+            else:
+                ft_log = ft_wp_f
+
+            curr_cmd = self.tp_ctrl.commands[self.tp_ctrl.program_counter]
+            if type(curr_cmd) is self.tp_ctrl.CmdForceCtrlZ:
+                f_des = curr_cmd.fz
+            else:
+                f_des = 0.0
+
+            if self.egm_state is not None:
+                q_log = self.egm_state.joint_angles
+                tool_meas_log = tool_wp_position_measured
+            else:
+                q_log = np.array([0.,0.,0.,0.,0.,0.])
+                tool_meas_log = rox.Transform(np.eye(3), [0.0,0.0,0.0])
+
+            self.logger.log(
+                q = q_log,
+                egm = tool_meas_log,
+                cmd = self.tool_wp_position,
+                FT = ft_log,
+                f_des = f_des,
+                run_status = f"{self.mode} - {self.toolpath_state}")
 
     def mode_manual_jog(self, mode_changed):
         if (self.safety_status != self.prev_safety_status) or mode_changed:
@@ -408,7 +458,7 @@ class ControllerStateMachine(QtCore.QObject):
         if v_des is not None or v_rot_des is not None:
             self.local_robot_position = self.tool_position * self.tool_offset.inv()
 
-    def mode_toolpath(self, mode_changed, start_clicked, stop_clicked, hold_clicked, simulate_force = False, zero_force = False):
+    def mode_toolpath(self, mode_changed, start_clicked, stop_clicked, hold_clicked, force, disable_f_ctrl = False):
         toolpath_state_changed = self.prev_toolpath_state != self.toolpath_state
         self.prev_toolpath_state = self.toolpath_state
 
@@ -423,12 +473,13 @@ class ControllerStateMachine(QtCore.QObject):
             elif start_clicked:
                 if self.safety_status.toolpath_ready():
                     self.toolpath_state = "running"
-        
+
 
         elif self.toolpath_state == "running":
             if toolpath_state_changed:
                 self.signal_status.emit("Running", "green")
                 self.signal_gui_lockout_section_enable.emit(False)
+                self.logger.start_logging("log.csv") # TODO filename
 
             elif stop_clicked or not self.safety_status.toolpath_ready():
                 self.toolpath_state = "standby"
@@ -437,7 +488,7 @@ class ControllerStateMachine(QtCore.QObject):
             elif hold_clicked:
                 self.toolpath_state = "hold_requested"
 
-            self.run_toopath(simulate_force, zero_force)        
+            self.run_toopath(force, disable_f_ctrl)   
 
 
         elif self.toolpath_state == "hold_requested":
@@ -448,7 +499,7 @@ class ControllerStateMachine(QtCore.QObject):
                 self.toolpath_state = "standby"
                 print("Stopped toolpath! stop_clicked: {} safety_status: {}".format(stop_clicked, self.safety_status))
 
-            self.run_toopath(simulate_force, zero_force)
+            self.run_toopath(force, disable_f_ctrl)
             current_cmd = self.tp_ctrl.commands[self.tp_ctrl.program_counter]
             if type(current_cmd) is self.tp_ctrl.CmdMoveL or  type(current_cmd) is self.tp_ctrl.CmdPosCtrl:
                 self.toolpath_state = "standby"
@@ -458,19 +509,13 @@ class ControllerStateMachine(QtCore.QObject):
 
         
 
-    def run_toopath(self, simulate_force, zero_force):
-        if simulate_force:
-            force = self.force_sim.read_ft_streaming(self.tool_wp_position.p)
-            #force += np.random.normal(loc=0.0, scale = 5.0, size=(6,))
-            self.signal_display_ft.emit(list(force), list(force)) # TODO update based on timer
-        else:
-            force = [0.,0.,0.,0.,0.,0.] # TODO
-
-        is_done, self.tool_wp_position = self.tp_ctrl.step(self.tool_wp_position, force, disable_f_ctrl = zero_force)
+    def run_toopath(self, force, disable_f_ctrl):
+        is_done, self.tool_wp_position = self.tp_ctrl.step(self.tool_wp_position, force, disable_f_ctrl = disable_f_ctrl)
 
         if is_done:
             self.toolpath_state = "standby"
             self.safety_status.toolpath_loaded = False
+            self.logger.stop_logging()
 
         self.tool_position = self.work_offset * self.tool_wp_position
         self.local_robot_position = self.tool_position * self.tool_offset.inv()

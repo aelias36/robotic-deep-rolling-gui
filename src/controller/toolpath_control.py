@@ -157,7 +157,8 @@ class ToolpathControl():
         
         else: # force control mode
             # TODO make sure this sign makes sense
-            v_z = ( f_z_meas - cmd.fz ) / self.params['force_ctrl_damping']
+            f_desired = max(cmd.fz, self.params['force_epsilon'])
+            v_z = ( f_z_meas - f_desired ) / self.params['force_ctrl_damping']
             z = tool_pose.p[2] + v_z * TIMESTEP
 
             p = [cmd.x, cmd.y, z]
