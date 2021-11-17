@@ -31,6 +31,8 @@ class Window(QMainWindow):
         self.stop_clicked_q = ClearQueue()
         self.hold_clicked_q = ClearQueue()
 
+        self.tare_q = ClearQueue()
+
         # Only need to check most recent
         self.mode_q = ClearQueue()
         self.wp_offset_q = ClearQueue()
@@ -62,6 +64,8 @@ class Window(QMainWindow):
         self.stop_button.clicked.connect(self.handle_stop_button)
         self.hold_button.clicked.connect(self.handle_hold_button)
 
+        self.tare_button.clicked.connect(self.handle_tare_button)
+
     ##############################################################################
     # Handle user input                                                          #
     ##############################################################################
@@ -80,6 +84,7 @@ class Window(QMainWindow):
     def handle_start_button(self): self.start_clicked_q.put(True)
     def handle_stop_button(self): self.stop_clicked_q.put(True)
     def handle_hold_button(self): self.hold_clicked_q.put(True)
+    def handle_tare_button(self): self.tare_q.put(True)
 
     def handle_mode_change(self, mode_value):
         if mode_value == 0:

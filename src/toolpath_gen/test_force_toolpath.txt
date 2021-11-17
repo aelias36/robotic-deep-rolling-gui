@@ -27,6 +27,7 @@
 #
 #
 moveL 0.001 0.002 0.005 1 0 0 0
+tare
 loadZ
 forceCtrlZ 0.001 0.002 0.0 1 0 0 0
 forceCtrlZ 0.001 0.002 1.6 1 0 0 0

@@ -27,6 +27,7 @@ import general_robotics_toolbox as rox
 import numpy as np
 
 TIMESTEP = 0.004
+CONV_TIME = 0.5 / TIMESTEP
 
 class ToolpathControl():
     def __init__(self):
@@ -34,11 +35,15 @@ class ToolpathControl():
         self.program_counter = 0
         self.params = None
 
+        self.tare_func = None # TODO
+        self.conv_counter = 0
+
         self.CmdMoveL = namedtuple("CmdMoveL", "x y z q0 qx qy qz")
         self.CmdLoadZ = namedtuple("CmdLoadZ", "")
         self.CmdForceCtrlZ = namedtuple("CmdForceCtrlZ", "x y fz q0 qx qy qz")
         self.CmdPosCtrl = namedtuple("CmdPosCtrl", "x y z q0 qx qy qz")
         self.CmdUnloadZ = namedtuple("CmdUnloadZ", "z")
+        self.CmdTare = namedtuple("CmdTare", "")
 
     def load_toolpath(self, toolpath_lines):
         self.commands = []
@@ -66,6 +71,9 @@ class ToolpathControl():
             elif line_sep[0] == "unloadZ":
                 self.commands.append(
                     self.CmdUnloadZ(*[float(x) for x in line_sep[1:]]))
+
+            elif line_sep[0] == "tare":
+                self.commands.append(self.CmdTare())
             else:
                 raise ValueError("Wrong toolpath command: " + line)
 
@@ -90,6 +98,9 @@ class ToolpathControl():
 
         elif type(current_cmd) is self.CmdUnloadZ:
             inc, T = self.unloadZ(current_cmd, tool_pose, force)
+
+        elif type(current_cmd) is self.CmdTare:
+            inc, T = self.tare(tool_pose)
         
         else:
             raise ValueError('Wrong command type: ' + str(current_cmd))
@@ -132,8 +143,6 @@ class ToolpathControl():
         return pos_is_done and rot_is_done, rox.Transform(R, p)
 
     def loadZ(self, tool_pose, force, disable_f_ctrl):
-        # TODO make sure to tare F/T sensor
-
         if disable_f_ctrl:
             return True, tool_pose
 
@@ -146,8 +155,6 @@ class ToolpathControl():
             return True, tool_pose
 
     def forceCtrlZ(self, cmd, tool_pose, force, disable_f_ctrl):
-        # TODO limit to force_epsilon so we don't lose contact
-
         # TODO lookahead
         f_z_meas = force[5]
         R = rox.q2R([cmd.q0, cmd.qx, cmd.qy, cmd.qz])
@@ -181,6 +188,19 @@ class ToolpathControl():
         else:
             p[2] += self.params['unload_speed'] * TIMESTEP
             return False, rox.Transform(tool_pose.R, p)
+
+    def tare(self, tool_pose):
+        # Make sure we aren't moving by waiting CONV_TIME steps
+        if self.conv_counter < CONV_TIME:
+            self.conv_counter += 1
+            return False, tool_pose
+        else:
+            self.conv_counter = 0
+            if self.tare_func is not None:
+                self.tare_func()
+            else:
+                print("Warning: tare_func not set")
+            return True, tool_pose
 
 def timing_test():
     import time

@@ -5153,6 +5153,22 @@ color: white;</string>
       <bool>false</bool>
      </property>
     </widget>
+    <widget class="QPushButton" name="tare_button">
+     <property name="geometry">
+      <rect>
+       <x>410</x>
+       <y>10</y>
+       <width>91</width>
+       <height>31</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Tare FT Sensor</string>
+     </property>
+     <property name="checkable">
+      <bool>false</bool>
+     </property>
+    </widget>
    </widget>
    <zorder>control_frame</zorder>
    <zorder>frame_3</zorder>

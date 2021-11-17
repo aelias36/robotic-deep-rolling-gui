@@ -124,6 +124,7 @@ class ControllerStateMachine(QtCore.QObject):
         self.net_ft.start_streaming()
 
         self.tp_ctrl = toolpath_control.ToolpathControl()
+        self.tp_ctrl.tare_func = lambda: self.gui.tare_q.put(True)
 
         self.logger = logger.Logger()
 
@@ -269,6 +270,12 @@ class ControllerStateMachine(QtCore.QObject):
         # Receive F/T sensor messages
         # [Tx, Ty, Tz, Fx, Fy, Fz]
         ft_connected, ft, ft_status = self.net_ft.try_read_ft_streaming(0.01)
+
+        # Tare if requested
+        if self.gui.tare_q.get_and_clear() is not None:
+            print("Tare requested")
+            if ft_connected:
+                self.net_ft.tare = ft
 
         if ft_connected and self.tool_position is not None:
             # Apply lever arm to go from F/T at sensor frame to F/T at tool frame

@@ -94,6 +94,7 @@ class GenFullToolpath():
 
 		# Move to hover position above first roll
 		toolpath += "moveL {} {} {} 1 0 0 0\n".format(self.params['margin_length'], self.params['margin_width'], self.params['hover_height'])
+		toolpath += "tare\n"
 
 		y_index = 0
 		while True:

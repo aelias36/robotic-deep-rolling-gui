@@ -2,6 +2,9 @@ moveL (multiple timesteps and blocking)
 	move linearly in cartesian space to a desired point
 	moveL X Y Z q0 qx qy qz
 
+tare (blocking)
+	tares the FT sensor
+
 loadZ (multiple timesteps and blocking)
 	move robot until desired force reached
 
