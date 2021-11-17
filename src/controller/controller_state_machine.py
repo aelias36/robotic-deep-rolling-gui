@@ -33,8 +33,8 @@ from PyQt5.QtCore import QTimer
 
 TIMESTEP = 0.004
 
-FT_SENSOR_IP = "192.168.1.200" # TODO
-F_POS_THRESH = 20.0 # N
+FT_SENSOR_IP = "192.168.1.2"
+F_POS_THRESH = 10.0 # N
 F_F_CTRL_THRESH = 2000.0 # N
 
 
@@ -268,13 +268,13 @@ class ControllerStateMachine(QtCore.QObject):
 
         # Receive F/T sensor messages
         # [Tx, Ty, Tz, Fx, Fy, Fz]
-        ft_connected, ft, ft_status = self.net_ft.try_read_ft_streaming()
+        ft_connected, ft, ft_status = self.net_ft.try_read_ft_streaming(0.01)
 
-        if ft_connected:
+        if ft_connected and self.tool_position is not None:
             # Apply lever arm to go from F/T at sensor frame to F/T at tool frame
             # This is still represented in the sensor frame
-            torque_sensor = ft[0:2]
-            force_sensor = ft[3:5]
+            torque_sensor = ft[0:2+1]
+            force_sensor = ft[3:5+1]
             # offset from tool to FT sensor
             T_tool_ft = self.tool_offset.inv() * self.ft_offset
             torque_tool = torque_sensor + rox.hat(T_tool_ft.p).dot(force_sensor)

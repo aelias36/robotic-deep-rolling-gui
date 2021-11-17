@@ -60,9 +60,9 @@ class Logger():
 		header_cols.append("EGMq1,EGMq2,EGMq3,EGMq4,EGMq5,EGMq6,")
 		header_cols.append(self.header_T("EGM"))
 		header_cols.append(self.header_T("Commanded"))
-		header_cols.append("Fx,Fy,Fz,Tx,Ty,Tz,")
+		header_cols.append("Tx,Ty,Tz,Fx,Fy,Fz,")
 		header_cols.append("Fz_des,")
-		header_cols.append("run status")
+		header_cols.append("run_status")
 		header = ''.join(header_cols) + '\n'
 		self.file.write(header)
 

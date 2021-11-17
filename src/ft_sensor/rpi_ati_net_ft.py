@@ -72,8 +72,9 @@ class NET_FT(object):
         res = None
         while res is None:
             try:
-                res = requests.get(url, timeout = 0.01)
-            except requests.exceptions.Timeout:
+                #print("getting...")
+                res = requests.get(url, timeout = 0.1)
+            except Exception:
                 pass
 
         res.raise_for_status()
