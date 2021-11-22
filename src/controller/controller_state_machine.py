@@ -17,6 +17,7 @@ import yaml
 from collections import namedtuple
 import dataclasses
 from queue import Empty
+import os
 
 from gui import rolling_gui
 from controller import toolpath_control, logger
@@ -182,6 +183,7 @@ class ControllerStateMachine(QtCore.QObject):
             lines = f.readlines()
 
         self.tp_ctrl.load_toolpath(lines)
+        self.tp_ctrl.file_name = os.path.basename(file_name).split(".")[0]
 
         self.signal_toolpath_name.emit(file_name)
 
@@ -503,7 +505,7 @@ class ControllerStateMachine(QtCore.QObject):
                 self.signal_status.emit("Running", "green")
                 self.signal_gui_lockout_section_enable.emit(False)
                 if not self.logger.is_logging:
-                    full_filename = self.logger.start_logging("log.csv") # TODO filename
+                    full_filename = self.logger.start_logging(f"{self.tp_ctrl.file_name}_log.csv")
                     self.signal_display_log_start.emit(full_filename)
 
             elif stop_clicked or not self.safety_status.toolpath_ready():

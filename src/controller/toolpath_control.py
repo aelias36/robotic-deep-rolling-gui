@@ -35,6 +35,9 @@ class ToolpathControl():
         self.program_counter = 0
         self.params = None
 
+        self.file_name = None
+        self.file_comment_lines = None
+
         self.tare_func = None
         self.conv_counter = 0
 
@@ -47,12 +50,13 @@ class ToolpathControl():
 
     def load_toolpath(self, toolpath_lines):
         self.commands = []
+        self.file_comment_lines = []
         self.program_counter = 0
 
         for line in toolpath_lines:
             line_sep = line.split()
             if line[0] == "#": # Comment
-                continue
+                self.file_comment_lines.append(line)
             elif line_sep[0] == "moveL":
                 self.commands.append(
                     self.CmdMoveL(*[float(x) for x in line_sep[1:]]))

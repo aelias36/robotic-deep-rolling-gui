@@ -32,7 +32,7 @@ class Logger():
 		self.file.write(txt)
 
 	# Returns full filename
-	def start_logging(self, file_name):
+	def start_logging(self, file_name, toolpath_file = None, comment_lines = None, offsets = None, execution_params = None):
 		if self.is_logging:
 			self.stop_logging()
 
