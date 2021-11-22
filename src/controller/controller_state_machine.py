@@ -89,6 +89,9 @@ class ControllerStateMachine(QtCore.QObject):
     signal_status_lights = QtCore.pyqtSignal(SafetyStatus)
     signal_display_ft = QtCore.pyqtSignal(list, list)
     signal_total_cmds = QtCore.pyqtSignal(str)
+    signal_display_log_start = QtCore.pyqtSignal(str)
+    signal_display_log_stop = QtCore.pyqtSignal()
+
 
     def set_up_signals(self):
         self.signal_display_positions.connect(self.gui.display_position)
@@ -105,6 +108,8 @@ class ControllerStateMachine(QtCore.QObject):
         self.signal_status_lights.connect(self.gui.display_status_lights)
         self.signal_display_ft.connect(self.gui.display_ft)
         self.signal_total_cmds.connect(self.gui.total_cmds.setText)
+        self.signal_display_log_start.connect(self.gui.display_log_start)
+        self.signal_display_log_stop.connect(self.gui.display_log_stop)
 
 
     def __init__(self, egm, gui):
@@ -333,6 +338,12 @@ class ControllerStateMachine(QtCore.QObject):
             self.work_offset = new_wp_offset
             self.safety_status.wp_os_loaded = True
 
+        new_log_status = self.gui.log_q.get_and_clear()
+        if new_log_status is not None:
+            if new_log_status is False:
+                self.logger.stop_logging()
+                self.signal_display_log_stop.emit()
+
         try:
             self.load_config_file(self.gui.config_file_q.get_nowait())
         except Empty:
@@ -491,7 +502,9 @@ class ControllerStateMachine(QtCore.QObject):
             if toolpath_state_changed:
                 self.signal_status.emit("Running", "green")
                 self.signal_gui_lockout_section_enable.emit(False)
-                self.logger.start_logging("log.csv") # TODO filename
+                if not self.logger.is_logging:
+                    full_filename = self.logger.start_logging("log.csv") # TODO filename
+                    self.signal_display_log_start.emit(full_filename)
 
             elif stop_clicked or not self.safety_status.toolpath_ready():
                 self.toolpath_state = "standby"
@@ -530,6 +543,7 @@ class ControllerStateMachine(QtCore.QObject):
             self.toolpath_state = "standby"
             self.safety_status.toolpath_loaded = False
             self.logger.stop_logging()
+            self.signal_display_log_stop.emit()
 
         self.tool_position = self.work_offset * self.tool_wp_position
         self.local_robot_position = self.tool_position * self.tool_offset.inv()

@@ -32,6 +32,7 @@ class Window(QMainWindow):
         self.hold_clicked_q = ClearQueue()
 
         self.tare_q = ClearQueue()
+        self.log_q = ClearQueue()
 
         # Only need to check most recent
         self.mode_q = ClearQueue()
@@ -65,6 +66,7 @@ class Window(QMainWindow):
         self.hold_button.clicked.connect(self.handle_hold_button)
 
         self.tare_button.clicked.connect(self.handle_tare_button)
+        self.stop_log_button.clicked.connect(self.handle_stop_log_button)
 
     ##############################################################################
     # Handle user input                                                          #
@@ -85,6 +87,7 @@ class Window(QMainWindow):
     def handle_stop_button(self): self.stop_clicked_q.put(True)
     def handle_hold_button(self): self.hold_clicked_q.put(True)
     def handle_tare_button(self): self.tare_q.put(True)
+    def handle_stop_log_button(self): self.log_q.put(False)
 
     def handle_mode_change(self, mode_value):
         if mode_value == 0:
@@ -110,6 +113,15 @@ class Window(QMainWindow):
     ##############################################################################
     # Display things                                                             #
     ##############################################################################
+
+    def display_log_start(self, file_name):
+        self.log_status.setText("Logging")
+        self.log_file.setText(file_name)
+        self.stop_log_button.setEnabled(True)
+
+    def display_log_stop(self):
+        self.log_status.setText("Done")
+        self.stop_log_button.setEnabled(False)
 
     def lockout_section_enable(self, is_enabled):
         self.mode_dial.setEnabled(is_enabled)

@@ -31,10 +31,10 @@ class Logger():
 		txt = ",".join(str(x) for x in row) + '\n'
 		self.file.write(txt)
 
-
+	# Returns full filename
 	def start_logging(self, file_name):
 		if self.is_logging:
-			return
+			self.stop_logging()
 
 		dt = datetime.datetime.now()
 		fulL_file_name = f"{dt:%Y-%m-%d_%H-%M-%S}_{file_name}"
@@ -66,6 +66,8 @@ class Logger():
 		header_cols.append("run_status")
 		header = ''.join(header_cols) + '\n'
 		self.file.write(header)
+
+		return fulL_file_name
 
 	def header_T(self, x):
 		return f"{x}_X,{x}_Y,{x}_Z,{x}_qw,{x}_qx,{x}_qy,{x}_qz,"
