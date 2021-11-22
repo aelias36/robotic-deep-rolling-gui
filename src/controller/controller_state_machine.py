@@ -505,7 +505,12 @@ class ControllerStateMachine(QtCore.QObject):
                 self.signal_status.emit("Running", "green")
                 self.signal_gui_lockout_section_enable.emit(False)
                 if not self.logger.is_logging:
-                    full_filename = self.logger.start_logging(f"{self.tp_ctrl.file_name}_log.csv")
+                    full_filename = self.logger.start_logging(
+                        f"{self.tp_ctrl.file_name}_log.csv",
+                        toolpath_file = self.tp_ctrl.file_name,
+                        comment_lines = self.tp_ctrl.file_comment_lines,
+                        offsets = f"work offset: {self.work_offset}, tool offset: {self.tool_offset}, ft_offset: {self.ft_offset}",
+                        execution_params = self.tp_ctrl.params)
                     self.signal_display_log_start.emit(full_filename)
 
             elif stop_clicked or not self.safety_status.toolpath_ready():

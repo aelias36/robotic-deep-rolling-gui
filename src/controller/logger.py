@@ -47,14 +47,29 @@ class Logger():
 		self.file.write( "# Robotic deep rolling log\n")
 		self.file.write(f"# Generated on {dt}\n")
 		self.file.write("# \n")
-		self.file.write("# Toolpath file:\n") # TODO
-		self.file.write("# Comments from toolpath file: \n")
 
-		self.file.write( "# Offsets:\n")
-		# TODO
+		if toolpath_file is not None:
+			self.file.write(f"# Toolpath file: {toolpath_file}\n")
+			self.file.write("#\n")
+			self.file.write("#\n")
 
-		self.file.write("# Toolpath execution parameters:\n")
-		# TODO
+		if comment_lines is not None:
+			self.file.write("# Comments from toolpath file: \n")
+			for line in comment_lines:
+				self.file.write(f"# {line}")
+			self.file.write("#\n")
+
+		if offsets is not None:
+			self.file.write( "# Offsets:\n")
+			for line in offsets.split('\n'):
+				self.file.write(f"# {line} \n")
+			self.file.write("#\n")
+			
+
+		if execution_params is not None:
+			self.file.write("# Toolpath execution parameters:\n")
+			self.file.write(f"# {execution_params} \n")
+			self.file.write("#\n")
 
 		header_cols = []
 		header_cols.append("timestamp,")
