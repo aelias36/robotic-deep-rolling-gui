@@ -35,7 +35,7 @@ class ToolpathControl():
         self.program_counter = 0
         self.params = None
 
-        self.tare_func = None # TODO
+        self.tare_func = None
         self.conv_counter = 0
 
         self.CmdMoveL = namedtuple("CmdMoveL", "x y z q0 qx qy qz")

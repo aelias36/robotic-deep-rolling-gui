@@ -365,13 +365,13 @@ def main():
 
 	params['margin_length'] = 1e-3
 	params['stepover'] = 1e-3
-	params['f_max'] = 1000
+	params['f_max'] = 2000
 
 	gen = GenFullToolpath(params)
 
 	#print(gen.header_txt())
 	toolpath = gen.toolpath()
-	with open('test_force_toolpath.txt', 'w') as file:
+	with open('2kN_120IPM_single.toolpath', 'w') as file:
 		file.write(toolpath)
 
 

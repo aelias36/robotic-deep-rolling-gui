@@ -36,15 +36,16 @@ class Logger():
 		if self.is_logging:
 			return
 
-		datetime_str = datetime.datetime.now()
+		dt = datetime.datetime.now()
+		fulL_file_name = f"{dt:%Y-%m-%d_%H-%M-%S}_{file_name}"
 
 		self.is_logging = True
 		self.t_0 = None
-		self.file = open(f"{datetime_str:%Y-%m-%d_%H-%M-%S}_{file_name}", 'x')
+		self.file = open(fulL_file_name, 'x')
 
-		self.file.write(f"# {file_name}\n")
+		self.file.write(f"# {fulL_file_name}\n")
 		self.file.write( "# Robotic deep rolling log\n")
-		self.file.write(f"# Generated on {datetime_str}\n")
+		self.file.write(f"# Generated on {dt}\n")
 		self.file.write("# \n")
 		self.file.write("# Toolpath file:\n") # TODO
 		self.file.write("# Comments from toolpath file: \n")

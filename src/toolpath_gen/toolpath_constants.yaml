@@ -1,6 +1,7 @@
 #Geometry
 part_length: 7.62e-2 # m (3 in)
-part_width: 2.54e-2 # m (1 inch)
+#part_width: 2.54e-2 # m (1 inch)
+part_width: 4.01e-3
 margin_width: 2.0e-3 # m
 #margin_length: # Length of unrolled area on each side (Y / stepover direction)
 #stepover: # Width between centers of adjacent rolls (in Y direction)
@@ -15,6 +16,7 @@ f_ramp_dist: 1.112e-3
 #Velocity Profile:
 accel: 0.2 # m/s*2
 v_slow: 2.0e-3 # m/s
-v_fast: 67.73e-3 # m/s
+#v_fast: 67.73e-3 # m/s # 160 IPM
+v_fast: 50.8e-3 # m/s # 120 IPM
 v_slow_dist: 2.54e-3 # m (0.1 inch)
 v_stepover: 67.73e-3 # m/s

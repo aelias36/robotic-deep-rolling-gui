@@ -149,12 +149,15 @@ class ControllerStateMachine(QtCore.QObject):
         self.toolpath_state = "standby"
         self.prev_toolpath_state = None
 
-        self.display_DRO = True
+        self.display_DRO_pos = True
+        self.display_DRO_ft = True
         self.DRO_timer = QTimer()
         self.DRO_timer.start(33) # ms
         self.DRO_timer.timeout.connect(self.handle_DRO_timer)
 
-    def handle_DRO_timer(self): self.display_DRO = True
+    def handle_DRO_timer(self):
+        self.display_DRO_pos = True # TODO these should be events
+        self.display_DRO_ft = True
 
     def start_loop(self):
         self.thread = threading.Thread(target = self.state_machine_loop)
@@ -238,7 +241,7 @@ class ControllerStateMachine(QtCore.QObject):
                 else: # previous msg was end of queue
                     break
             if i > 0:
-                print("Warning: Extra msgs in queue: ", i)
+                pass#print("Warning: Extra msgs in queue: ", i)
         
             fb = self.egm_state.robot_message.feedBack.cartesian
             pos = np.array([fb.pos.x, fb.pos.y, fb.pos.z])/1000.0 # mm -> m
@@ -248,9 +251,9 @@ class ControllerStateMachine(QtCore.QObject):
             tool_position_measured = robot_pos_measured * self.tool_offset
             tool_wp_position_measured = self.work_offset.inv() * tool_position_measured
 
-            if self.display_DRO:
+            if self.display_DRO_pos:
                 self.signal_display_positions.emit(tool_position_measured, tool_wp_position_measured)
-                self.display_DRO = False
+                self.display_DRO_pos = False
 
         # Update EGM safety status based on new messages    
         self.safety_status.egm_connected = self.egm_connected
@@ -270,12 +273,13 @@ class ControllerStateMachine(QtCore.QObject):
         # Receive F/T sensor messages
         # [Tx, Ty, Tz, Fx, Fy, Fz]
         ft_connected, ft, ft_status = self.net_ft.try_read_ft_streaming(0.01)
+        #print(ft)
 
         # Tare if requested
         if self.gui.tare_q.get_and_clear() is not None:
             print("Tare requested")
             if ft_connected:
-                self.net_ft.tare = ft
+                self.net_ft.tare += ft
 
         if ft_connected and self.tool_position is not None:
             # Apply lever arm to go from F/T at sensor frame to F/T at tool frame
@@ -301,8 +305,9 @@ class ControllerStateMachine(QtCore.QObject):
             ft_wp_f = np.array([0.,0.,0.,0.,0.,0.])
 
         # Display F/T sensor reading
-        # TODO update based on timer
-        self.signal_display_ft.emit(list(ft_world_f), list(ft_wp_f))
+        if self.display_DRO_ft:
+            self.signal_display_ft.emit(list(ft_world_f), list(ft_wp_f))
+            self.display_DRO_ft = False
 
         # Updated F/T safety status based on new messages
         self.safety_status.ft_connected = ft_connected
@@ -508,8 +513,10 @@ class ControllerStateMachine(QtCore.QObject):
 
             self.run_toopath(force, disable_f_ctrl)
             current_cmd = self.tp_ctrl.commands[self.tp_ctrl.program_counter]
-            if type(current_cmd) is self.tp_ctrl.CmdMoveL or  type(current_cmd) is self.tp_ctrl.CmdPosCtrl:
+            if type(current_cmd) is self.tp_ctrl.CmdMoveL or type(current_cmd) is self.tp_ctrl.CmdPosCtrl or type(current_cmd) is self.tp_ctrl.CmdTare:
                 self.toolpath_state = "standby"
+                # TODO move force/position mode to tp_ctrl
+                # TODO check for over-force based on force/position mode
         
         else:
             raise ValueError("Wrong value for toolpath_state: ", str(self.toolpath_state))
