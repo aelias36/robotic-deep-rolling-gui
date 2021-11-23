@@ -86,7 +86,7 @@ class GenFullToolpath():
 
 		roll_y_positions = np.arange(
 			self.params['margin_width'],
-			self.params['part_width'] - self.params['margin_width'] + self.params['stepover'],
+			self.params['part_width'] - self.params['margin_width'],
 			self.params['stepover'],
 			dtype=float)
 
@@ -363,15 +363,15 @@ def main():
 	with open('toolpath_constants.yaml', 'r') as file:
 		params = yaml.safe_load(file)
 
-	params['margin_length'] = 1e-3
-	params['stepover'] = 1e-3
-	params['f_max'] = 2000
+	params['margin_length'] = 0.03 * 25.4e-3
+	params['stepover'] = 0.02 * 25.4e-3
+	params['f_max'] = 1557 # 350 lb
 
 	gen = GenFullToolpath(params)
 
 	#print(gen.header_txt())
 	toolpath = gen.toolpath()
-	with open('2kN_120IPM_single.toolpath', 'w') as file:
+	with open('RTX_sample_3.toolpath', 'w') as file:
 		file.write(toolpath)
 
 

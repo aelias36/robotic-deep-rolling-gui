@@ -1,5 +1,5 @@
 toolpath_control_params:
-    force_ctrl_damping: 1.1e+5 # N / (m/s)
+    force_ctrl_damping: 1.3e+5 # N / (m/s)
     force_epsilon: 10.0 # N
     moveL_speed_lin: 0.1 # m/s
     moveL_speed_ang: 0.1745 # rad/s # 10.0 deg/sec
@@ -8,8 +8,8 @@ toolpath_control_params:
 
 
 work_offset:
-    pos: [0.0736, -1.5343, 1.118] # m
-    euler_deg: [0.0, 0.0, -92.83] # deg
+    pos: [0.06652, -1.531706, 1.11706] # m
+    euler_deg: [0.0, 0.0, -90.9746] # deg
 
 tool_offset:
     pos: [0.0, 0.0, 0.0] # m

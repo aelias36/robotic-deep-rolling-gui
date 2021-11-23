@@ -1,7 +1,6 @@
 #Geometry
 part_length: 7.62e-2 # m (3 in)
-#part_width: 2.54e-2 # m (1 inch)
-part_width: 4.01e-3
+part_width: 2.54e-2 # m (1 inch)
 margin_width: 2.0e-3 # m
 #margin_length: # Length of unrolled area on each side (Y / stepover direction)
 #stepover: # Width between centers of adjacent rolls (in Y direction)
