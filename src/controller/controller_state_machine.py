@@ -237,7 +237,8 @@ class ControllerStateMachine(QtCore.QObject):
 
         # Receive EGM message
         self.egm_connected, self.egm_state = self.egm.receive_from_robot(.1)
-        if self.egm_connected:
+
+        if self.egm_connected and not self.prev_safety_status.egm_ok():
             # Clear queue
             i = 0
             while True:
@@ -249,7 +250,8 @@ class ControllerStateMachine(QtCore.QObject):
                     break
             if i > 0:
                 pass#print("Warning: Extra msgs in queue: ", i)
-        
+
+        if self.egm_connected:
             fb = self.egm_state.robot_message.feedBack.cartesian
             pos = np.array([fb.pos.x, fb.pos.y, fb.pos.z])/1000.0 # mm -> m
             quat = [fb.orient.u0, fb.orient.u1, fb.orient.u2, fb.orient.u3]
@@ -279,7 +281,7 @@ class ControllerStateMachine(QtCore.QObject):
 
         # Receive F/T sensor messages
         # [Tx, Ty, Tz, Fx, Fy, Fz]
-        ft_connected, ft, ft_status = self.net_ft.try_read_ft_streaming(0.01)
+        ft_connected, ft, ft_status = self.net_ft.try_read_ft_streaming(0.05)
         #print(ft)
 
         # Tare if requested
