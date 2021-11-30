@@ -36,7 +36,7 @@ TIMESTEP = 0.004
 
 FT_SENSOR_IP = "192.168.1.2"
 F_POS_THRESH = 10.0 # N
-F_F_CTRL_THRESH = 2000.0 # N
+F_F_CTRL_THRESH = 3000.0 # N
 
 
 @dataclasses.dataclass
@@ -69,7 +69,7 @@ class SafetyStatus:
             and self.toolpath_config_loaded \
             and self.wp_os_loaded \
             and self.tool_os_loaded \
-            and self.ft_os_loaded # TODO add FT requirements
+            and self.ft_os_loaded
 
 
 class ControllerStateMachine(QtCore.QObject):
@@ -322,8 +322,8 @@ class ControllerStateMachine(QtCore.QObject):
         self.safety_status.ft_connected = ft_connected
         self.safety_status.ft_status_normal = ft_connected and ft_status == 0
         f_magnitude = np.linalg.norm(ft_wp_f)
-        self.safety_status.f_below_pos_thresh = ft_connected and f_magnitude < F_POS_THRESH
-        self.safety_status.f_below_f_ctrl_thresh = ft_connected and f_magnitude < F_F_CTRL_THRESH
+        self.safety_status.f_below_pos_thresh = self.safety_status.ft_ok() and f_magnitude < F_POS_THRESH
+        self.safety_status.f_below_f_ctrl_thresh = self.safety_status.ft_ok() and f_magnitude < F_F_CTRL_THRESH
 
 
         # Go through all the GUI queues
@@ -522,7 +522,8 @@ class ControllerStateMachine(QtCore.QObject):
             elif hold_clicked:
                 self.toolpath_state = "hold_requested"
 
-            self.run_toopath(force, disable_f_ctrl)   
+            self.run_toopath(force, disable_f_ctrl)
+
 
 
         elif self.toolpath_state == "hold_requested":
@@ -533,18 +534,16 @@ class ControllerStateMachine(QtCore.QObject):
                 self.toolpath_state = "standby"
                 print("Stopped toolpath! stop_clicked: {} safety_status: {}".format(stop_clicked, self.safety_status))
 
-            self.run_toopath(force, disable_f_ctrl)
-            current_cmd = self.tp_ctrl.commands[self.tp_ctrl.program_counter]
-            if type(current_cmd) is self.tp_ctrl.CmdMoveL or type(current_cmd) is self.tp_ctrl.CmdPosCtrl or type(current_cmd) is self.tp_ctrl.CmdTare:
+            is_pos_ctrl = self.run_toopath(force, disable_f_ctrl)
+            
+            if is_pos_ctrl:
                 self.toolpath_state = "standby"
-                # TODO move force/position mode to tp_ctrl
-                # TODO check for over-force based on force/position mode
         
         else:
             raise ValueError("Wrong value for toolpath_state: ", str(self.toolpath_state))
 
         
-
+    # Returns True if in position control mode
     def run_toopath(self, force, disable_f_ctrl):
         is_done, self.tool_wp_position = self.tp_ctrl.step(self.tool_wp_position, force, disable_f_ctrl = disable_f_ctrl)
 
@@ -560,6 +559,24 @@ class ControllerStateMachine(QtCore.QObject):
         self.signal_current_cmd_number.emit(str(self.tp_ctrl.program_counter+1))
         self.signal_progress_bar.emit(round((self.tp_ctrl.program_counter+1) / len(self.tp_ctrl.commands) * 100.0))
         self.signal_current_cmd_text.emit(str(self.tp_ctrl.commands[self.tp_ctrl.program_counter]))
+
+        # TODO move force/position mode to tp_ctrl
+        current_cmd = self.tp_ctrl.commands[self.tp_ctrl.program_counter]
+        return  type(current_cmd) is self.tp_ctrl.CmdMoveL \
+             or type(current_cmd) is self.tp_ctrl.CmdPosCtrl \
+             or type(current_cmd) is self.tp_ctrl.CmdTare
+
+        if self.mode != "toolpath":
+            pass # Don't do force safety checks
+
+        if is_pos_ctrl:   
+            if not self.safety_status.f_below_pos_thresh:
+                    self.toolpath_state = "standby"
+                    print(f"Stopped toolpath from over-force during position control! stop_clicked: {stop_clicked} safety_status: {self.safety_status}")
+        else: # force control
+            if not self.safety_status.f_below_f_ctrl_thresh:
+                self.toolpath_state = "standby"
+                print(f"Stopped toolpath from over-force during force control! stop_clicked: {stop_clicked} safety_status: {self.safety_status}")
 
 def main():
     egm = rpi_abb_irc5.EGM()
