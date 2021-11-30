@@ -1,7 +1,7 @@
 # Robotic Deep Rolling GUI
 
 ## Python packages
-`python3 -m pip install general-robotics-toolbox numpy pyqt5 pyqt5-tools protobuf beautifulsoup4 ws4py pyyaml`
+`python3 -m pip install general-robotics-toolbox numpy pyqt5 pyqt5-tools protobuf beautifulsoup4 ws4py pyyaml pandas openpyxl`
 
 ## Sources
 
