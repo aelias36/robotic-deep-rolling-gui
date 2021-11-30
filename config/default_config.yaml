@@ -8,7 +8,7 @@ toolpath_control_params:
 
 
 work_offset:
-    pos: [0.06652, -1.531706, 1.11706] # m
+    pos: [0.06652, -1.533226, 1.11706] # m
     euler_deg: [0.0, 0.0, -90.5] # deg
 
 tool_offset:
