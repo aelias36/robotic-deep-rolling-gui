@@ -364,14 +364,14 @@ def main():
 		params = yaml.safe_load(file)
 
 	params['margin_length'] = 0.03 * 25.4e-3
-	params['stepover'] = 0.01 * 25.4e-3
+	params['stepover'] = 0.006 * 25.4e-3
 	params['f_max'] = 1112 # 250 lb
 
 	gen = GenFullToolpath(params)
 
 	#print(gen.header_txt())
 	toolpath = gen.toolpath()
-	with open('RTX_sample_2v2.toolpath', 'w') as file:
+	with open('RTX_sample_1v2.toolpath', 'w') as file:
 		file.write(toolpath)
 
 
