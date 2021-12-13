@@ -364,8 +364,8 @@ class ControllerStateMachine(QtCore.QObject):
         elif self.mode == "toolpath":
             self.mode_toolpath(mode_changed, start_clicked, stop_clicked, hold_clicked, ft_wp_f)
         elif self.mode == "simulator":
-            if self.tool_wp_position is not None:
-                ft_simulated = self.force_sim.read_ft_streaming(self.tool_wp_position.p)
+            if self.egm_connected:
+                ft_simulated = self.force_sim.read_ft_streaming(tool_wp_position_measured.p)
             else:
                 ft_simulated = np.array([0.,0.,0.,0.,0.,0.])
             self.mode_toolpath(mode_changed, start_clicked, stop_clicked, hold_clicked, ft_simulated)
