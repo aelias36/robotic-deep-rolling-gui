@@ -200,6 +200,7 @@ class ControllerStateMachine(QtCore.QObject):
 
         if "toolpath_control_params" in config:
             self.tp_ctrl.params = config["toolpath_control_params"]
+            self.tp_ctrl.calculate_lookahead()
             print("Loaded toolpath control parameters:")
             print(self.tp_ctrl.params)
             self.safety_status.toolpath_config_loaded = True

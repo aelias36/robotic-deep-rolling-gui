@@ -5,6 +5,7 @@ toolpath_control_params:
     moveL_speed_ang: 0.1745 # rad/s # 10.0 deg/sec
     load_speed: 0.002 # m/s
     unload_speed: 0.01 # m/s
+    N_lookahead: 5 # samples
 
 
 work_offset:

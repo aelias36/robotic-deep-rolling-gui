@@ -18,6 +18,9 @@ unload_speed: tool speed duruing force unloading
 
 disable_f_ctrl: disable force control (True/False)
     Force control commands do not move the tool in the force control direction
+
+N_lookahead: number of samples for force lookahead
+    Force commands will be sent early by this amount
 '''
 
 
@@ -43,7 +46,8 @@ class ToolpathControl():
 
         self.CmdMoveL = namedtuple("CmdMoveL", "x y z q0 qx qy qz")
         self.CmdLoadZ = namedtuple("CmdLoadZ", "")
-        self.CmdForceCtrlZ = namedtuple("CmdForceCtrlZ", "x y fz q0 qx qy qz")
+        # f_la is force lookahead - calculated based on lookahead time
+        self.CmdForceCtrlZ = namedtuple("CmdForceCtrlZ", "x y fz q0 qx qy qz f_la")
         self.CmdPosCtrl = namedtuple("CmdPosCtrl", "x y z q0 qx qy qz")
         self.CmdUnloadZ = namedtuple("CmdUnloadZ", "z")
         self.CmdTare = namedtuple("CmdTare", "")
@@ -66,7 +70,7 @@ class ToolpathControl():
 
             elif line_sep[0] == "forceCtrlZ":
                 self.commands.append(
-                    self.CmdForceCtrlZ(*[float(x) for x in line_sep[1:]]))
+                    self.CmdForceCtrlZ(*([float(x) for x in line_sep[1:]] + [None])))
 
             elif line_sep[0] == "posCtrl":
                 self.commands.append(
@@ -80,6 +84,8 @@ class ToolpathControl():
                 self.commands.append(self.CmdTare())
             else:
                 raise ValueError("Wrong toolpath command: " + line)
+
+        self.calculate_lookahead()
 
     def step(self, tool_pose, force, disable_f_ctrl = False):
         # TODO check if a program is loaded
@@ -167,8 +173,10 @@ class ToolpathControl():
             p = [cmd.x, cmd.y, tool_pose.p[2]]
         
         else: # force control mode
-            # TODO make sure this sign makes sense
-            f_desired = max(cmd.fz, self.params['force_epsilon'])
+            if cmd.f_la is not None:
+                f_desired = max(cmd.f_la, self.params['force_epsilon'])
+            else:
+                f_desired = max(cmd.fz,   self.params['force_epsilon'])
             v_z = ( f_z_meas - f_desired ) / self.params['force_ctrl_damping']
             z = tool_pose.p[2] + v_z * TIMESTEP
 
@@ -205,6 +213,32 @@ class ToolpathControl():
             else:
                 print("Warning: tare_func not set")
             return True, tool_pose
+
+    def calculate_lookahead(self):
+        if (not self.commands) or (not self.params):
+            return
+
+        if self.params['N_lookahead'] == 0:
+            return
+
+
+        for i, cmd in enumerate(self.commands):
+            if type(cmd) is not self.CmdForceCtrlZ:
+                continue
+
+            copy_from_ind = i + self.params['N_lookahead']
+
+            if copy_from_ind > len(self.commands) - 1:
+                f_la = 0.0
+            elif any(type(c) is not self.CmdForceCtrlZ for c in self.commands[i:copy_from_ind+1]):
+                f_la = 0.0
+            else:
+                f_la = self.commands[copy_from_ind].fz
+
+            self.commands[i] = cmd._replace(f_la = f_la) # Maybe shouldn't be a namedtuple...
+
+
+
 
 def timing_test():
     import time
