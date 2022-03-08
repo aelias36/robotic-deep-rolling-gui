@@ -1,5 +1,36 @@
 # Robotic Deep Rolling GUI
 
+A GUI for doing deep rolling using ABB industrial robots. 
+
+![GUI](https://user-images.githubusercontent.com/4022499/157300424-71651796-1adc-4792-b775-1491ed91696e.png)
+![Robotic Deep Rolling](https://user-images.githubusercontent.com/4022499/157301229-466da7ed-f395-4ba4-be85-53e35356a963.png)
+
+
+### Control goal:
+Design and track a position / force profile
+
+### Control structure:
+* Generalized damper force control using force/torque sensor feedback, with filtering at sensor and robot
+* Look-ahead control for robot delay compensation
+
+### Implementation:
+#### Parametric toolpath generation
+* 16 parameters for geometry, force, and velocity
+* Custom toolpath protocol designed for hybrid motion/force control
+
+#### GUI for toolpath execution
+* Interface with F/T sensor and robot controller
+* Toolpath execution state machine covering multiple command types
+* Designed for use with curved parts as well
+
+#### High fidelity simulations for testing and tuning
+* Connect to RobotStudio to simulate robot dynamics
+* Linear spring model for joint flexibility modeling
+* Can be expanded to bypass RobotStudio and use delay+LPF model for full robot simulation in one piece of software
+
+
+---
+
 ## Python packages
 `python3 -m pip install general-robotics-toolbox numpy pyqt5 pyqt5-tools protobuf beautifulsoup4 ws4py pyyaml pandas openpyxl`
 
