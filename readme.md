@@ -2,6 +2,16 @@
 
 A GUI for doing deep rolling using ABB industrial robots. 
 
+[Simulator Installation](https://github.com/rpiRobotics/installation-tutorials/blob/main/robotstudio.md)
+
+[GUI Installation](installation_tutorial.md)
+
+[System Tuning (WIP)](tuning_tutorial.md)
+
+[Toolpath Generation (WIP)](toolpath_generation_tutorial.md)
+
+[GUI Usage (WIP)](GUI_usage_tutorial.md)
+
 ![GUI](https://user-images.githubusercontent.com/4022499/157300424-71651796-1adc-4792-b775-1491ed91696e.png)
 ![Robotic Deep Rolling](https://user-images.githubusercontent.com/4022499/157301229-466da7ed-f395-4ba4-be85-53e35356a963.png)
 
@@ -30,9 +40,6 @@ Design and track a position / force profile
 
 
 ---
-
-## Python packages
-`python3 -m pip install general-robotics-toolbox numpy pyqt5 pyqt5-tools protobuf beautifulsoup4 ws4py pyyaml pandas openpyxl`
 
 ## Sources
 
@@ -63,7 +70,7 @@ Robot deflection simulation for simulating force/torque sensor readings when usi
 ### `src > gui`
 Qt GUI made in Qt Designer
 
-If you installed `pyqt5-tools` you will see Qt Designer at
+If you install `pyqt5-tools` using `python -m pip install pyqt5-tools` you will see Qt Designer at
 
 `Python39\Lib\site-packages\qt5_applications\Qt\bin\designer.exe`
 
