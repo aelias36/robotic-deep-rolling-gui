@@ -12,7 +12,10 @@
 # Install dependencies
 1. Open the Command Prompt on your computer by typing "Command Prompt" into the search bar.
 
-2. Type the following command (everything inside of the quotation marks) into the Command Prompt and press enter:  "python -m pip install general-robotics-toolbox numpy pyqt5 protobuf==3.20.3 beautifulsoup4 ws4py pyyaml pandas openpyxl requests"
+2. Type the following command into the Command Prompt and press enter:
+```shell
+python -m pip install general-robotics-toolbox numpy pyqt5 protobuf==3.20.3 beautifulsoup4 ws4py pyyaml pandas openpyxl requests
+```
 
 # Run GUI
 1. Go to https://github.com/aelias36/robotic-deep-rolling-gui, click on the green "Code" tab near the top right, and then click "Download ZIP."
@@ -20,10 +23,4 @@
 
 2. Once the ZIP file downloads, right click on it in your file explorer, and then select "Extract All" to unzip the files.
 
-3. Within the folder, right click on the file called "deep_rolling_GUI.bat." Open the file in Notepad. Change "python3" to "python" in this file, and then save it.
-![image](https://user-images.githubusercontent.com/123105763/214308403-f58338e6-0aba-4885-b0a6-0701771cec03.png)
-
-4. After the batch file saves, go back to the file explorer. Double click on the batch file to run it.
-
-5. The GUI should automatically open after the batch file runs.
-![image](https://user-images.githubusercontent.com/123105763/214309294-211363e3-38e6-4044-aa94-b7a081ab1726.png)
+3. Within the folder, double click the file called `deep_rolling_GUI.bat`, which shoul open GUI.
