@@ -17,7 +17,7 @@ ylim([-1e-4, 10e-4])
 xlabel("Timestep")
 ylabel("X Position (m)")
 legend(["Feedback", "Commanded"])
-title("")
+title("X Position vs Timestep")
 
 %% Delta t vs Timestep
 plot(diff(tab.timestamp), 'x'); yline(0.004);
