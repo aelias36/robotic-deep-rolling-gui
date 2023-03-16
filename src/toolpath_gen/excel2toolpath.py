@@ -15,7 +15,7 @@ from force_toolpath_gen import GenFullToolpath
 
 
 def main():
-    with open('../toolpath_constants.yaml', 'r') as file:
+    with open('../s23_toolpath1.yaml', 'r') as file:
         params = yaml.safe_load(file)
 
 
@@ -25,12 +25,12 @@ def main():
         if index == 0:
             assert(row['load'] == 'lb')
             assert(row['step over'] == 'in')
-            assert(row['corner radius'] == 'in')
+            assert(row['velocity'] == 'in/s')
             continue
 
         print(f"\n\n{index}:\n{row}")
         print(row['corner radius'])
-        params['margin_length'] = row['corner radius'] * 25.4e-3 # in -> m
+        params['v_fast'] = row['velocity'] * 25.4e-3 # in/s -> m/s
         params['stepover'] = row['step over'] * 25.4e-3 # in -> m
         params['f_max'] = row['load'] * 4.448 # lb -> N
 
