@@ -360,7 +360,7 @@ def test_single_gen():
 	plt.show()
 
 def main():
-	with open('toolpath_constants.yaml', 'r') as file:
+	with open('s23_toolpath1.yaml', 'r') as file:
 		params = yaml.safe_load(file)
 
 	#params['margin_length'] = 0.15 * 25.4e-3
