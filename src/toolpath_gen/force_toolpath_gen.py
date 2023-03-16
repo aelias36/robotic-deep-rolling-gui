@@ -363,11 +363,11 @@ def main():
 	with open('toolpath_constants.yaml', 'r') as file:
 		params = yaml.safe_load(file)
 
-	params['margin_length'] = 0.15 * 25.4e-3
-	params['stepover'] = 0.006 * 25.4e-3
-	params['f_max'] = 1779 # 400 lb
-	params['f_ramp_dist'] = 0.15 * 25.4e-3
-	params['v_slow_dist'] = 0.25 * 25.4e-3
+	#params['margin_length'] = 0.15 * 25.4e-3
+	#params['stepover'] = 0.006 * 25.4e-3
+	#params['f_max'] = 1779 # 400 lb
+	#params['f_ramp_dist'] = 0.15 * 25.4e-3
+	#params['v_slow_dist'] = 0.25 * 25.4e-3
 
 	gen = GenFullToolpath(params)
 
