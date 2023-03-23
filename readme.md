@@ -12,7 +12,7 @@ A GUI for doing deep rolling using ABB industrial robots.
 
 [GUI Usage (WIP)](GUI_usage_tutorial.md)
 
-[How to use the ABB Robot] (robot_usage_tutorial.md)
+[How to use the ABB Robot](robot_usage_tutorial.md)
 
 ![GUI](https://user-images.githubusercontent.com/4022499/157300424-71651796-1adc-4792-b775-1491ed91696e.png)
 ![Robotic Deep Rolling](https://user-images.githubusercontent.com/4022499/157301229-466da7ed-f395-4ba4-be85-53e35356a963.png)
