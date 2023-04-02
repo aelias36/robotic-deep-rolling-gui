@@ -24,6 +24,8 @@ TODO
 * v_stepover: Velocity used during a stepover
 
 # Generating a toolpath from Python
+To do this, you must have downloaded Python and installed the necessary dependencies as detailed in the installation tutorial located here: https://github.com/aelias36/robotic-deep-rolling-gui/blob/main/installation_tutorial.md.
+
 1. Use the python file force_toolpath_gen.py located in src > toolpath_gen to generate a toolpath. 
 
 2. The only part of this Python file that you need to edit is at the very bottom of it; the main() function. This is where parameters are specified. It is also where a .yaml file is read, which is where all of the parameters come from.
