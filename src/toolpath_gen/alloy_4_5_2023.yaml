@@ -1,5 +1,5 @@
 #Geometry
-part_length: 0.1016 # m (4 in)
+part_length: 0.08382 # m (3.3 in)
 part_width: 0.001 # m 
 margin_width: 0 # m
 margin_length: 0 # Length of unrolled area on each side (Y / stepover direction)
