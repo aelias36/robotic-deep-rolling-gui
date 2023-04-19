@@ -1,9 +1,9 @@
 #Geometry
 part_length: 0.08382 # m (3.3 in)
-part_width: 0.001 # m 
+part_width: 0.0001 # m 
 margin_width: 0 # m
 margin_length: 0 # Length of unrolled area on each side (Y / stepover direction)
-stepover: 0.0001 #m # Width between centers of adjacent rolls (in Y direction)
+stepover: 0.00001 #m # Width between centers of adjacent rolls (in Y direction)
 hover_height: 5.0e-3 # m
 
 #Force Profile:
