@@ -14,7 +14,7 @@ TODO
 * f_load_unload_rate: N/s Rate w.r.t. to ramp force during loading and unloading
 * f_max: Maximum force, used during constant force section
 * f_min_prop: Proportion of F_max applied at very beginning and end of roll (0.1)
-* f_ramp_dist: Distance to ramp from F_min to F_max, and F_max to F_min (12.7e-3 # m # 0.5 in)
+* f_ramp_dist: Distance to ramp from F_min to F_max, and F_max to F_min (12.7e-3 # m # 0.5 in). Note that f_ramp_dist can be at most half of x_max or part_length.
 
 ## Velocity Profile:
 * accel: Acceleration used to ramp between different velocities
@@ -22,6 +22,13 @@ TODO
 * v_fast: Faster velocity used in middle of roll
 * v_slow_dist: Distance at beginning and end of roll to travel at <= v_slow
 * v_stepover: Velocity used during a stepover
+
+## Helpful diagram for calculating certain parameters
+![image](https://user-images.githubusercontent.com/123105763/233668145-265b75f3-98f3-4194-baa3-3609b12d7a52.png)
+When you would like to change parameters such as the length of a roll, you need to be sure to adjust other parameters according to the following criteria, as they relate to the above diagram:
+* f_ramp_dist can be at most half of x_max
+* Area under the first three segments of the velocity profile (first acceleration, v_slow section, and second acceleration) can be at most half of x_max
+* Area under the first two segments of the velocity profile (first acceleration, v_slow section) must be greater than f_ramp_dist
 
 # Generating a toolpath from Python
 To do this, you must have downloaded Python and installed the necessary dependencies as detailed in the installation tutorial located here: https://github.com/aelias36/robotic-deep-rolling-gui/blob/main/installation_tutorial.md.
